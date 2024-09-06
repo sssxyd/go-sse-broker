@@ -210,7 +210,6 @@ func HandleSend(c *gin.Context) {
 			remoteDeviceIds = append(remoteDeviceIds, deviceId)
 		}
 	}
-	log.Printf("Remote device count: %d\n", len(remoteDeviceIds))
 	if len(remoteDeviceIds) > 0 {
 		instanceDeviceMap := splitDeviceWithInstanceAddress(remoteDeviceIds)
 		for address, ids := range instanceDeviceMap {

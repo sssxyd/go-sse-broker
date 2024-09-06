@@ -16,10 +16,11 @@ type ServiceInstance struct {
 	StartTime   string `json:"start_time"`
 	DeviceCount int    `json:"device_count"`
 	Devices     sync.Map
+	TopicCancel context.CancelFunc
 }
 
-func subscribeInstanceTopic(topic string) {
-	err := globalRedis.Subscribe(func(channel string, payload string) {
+func subscribeInstanceTopic(ctx context.Context, topic string) {
+	err := globalRedis.Subscribe(ctx, func(channel string, payload string) {
 		var instruction Instruction
 		err := json.Unmarshal([]byte(payload), &instruction)
 		if err != nil {
@@ -54,12 +55,10 @@ func NewServiceInstance(address string) *ServiceInstance {
 func (s *ServiceInstance) handleInstruction(instruction *Instruction) {
 	// log.Println("handleInstruction", instruction)
 	if channel, ok := deviceChannels.Load(instruction.DeviceID); ok {
-		log.Println("get channel ok")
 		inschannel, ok := channel.(chan *Instruction)
 		if !ok {
 			log.Printf("Device %s not found at %s\n", instruction.DeviceID, s.Address)
 		} else {
-			log.Println("send instruction")
 			inschannel <- instruction
 		}
 	} else {
@@ -106,14 +105,18 @@ func (s *ServiceInstance) start() bool {
 		return false
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	s.TopicCancel = cancel
 	// 订阅实例Topic
-	go subscribeInstanceTopic(fmt.Sprintf("%s%s", TOPIC_INSTANCE_PREFIX, s.Address))
+	go subscribeInstanceTopic(ctx, fmt.Sprintf("%s%s", TOPIC_INSTANCE_PREFIX, s.Address))
 
 	return true
 }
 
 func (s *ServiceInstance) stop() {
-	// 停止实例
+	// 停止订阅实例Topic
+	s.TopicCancel()
+
 	// 主动关闭本实例上连接的全部设备
 	s.Devices.Range(func(key, value interface{}) bool {
 		device, ok := value.(*Device)

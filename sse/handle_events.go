@@ -58,7 +58,7 @@ func HandleEvents(c *gin.Context) {
 	}
 
 	// 发送连接成功事件
-	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_CONNECTED, deviceName)
+	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_CONNECTED, address)
 	flusher.Flush()
 
 	// 发送缓存的消息帧
@@ -127,7 +127,7 @@ func HandleEvents(c *gin.Context) {
 			device.touch()
 			user.touch()
 		case <-c.Writer.CloseNotify():
-			log.Printf("Client %s is offline\n", address)
+			log.Printf("Client %s on Device %s is offline\n", address, deviceName)
 			device.offline(DCR_DISCONNECT, "")
 			user.handleDeviceOffline(device)
 			return

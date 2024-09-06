@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"context"
+	"log"
 	"net"
 	"time"
 
@@ -808,18 +809,17 @@ func (r *RedisClient) Publish(channel string, message interface{}) error {
 	return r.client.Publish(ctx, channel, message).Err()
 }
 
-// Subscribe 订阅一个或多个频道，并处理接收到的消息
+// Subscribe 订阅一个或多个频道，并处理接收到的消息, 该方法会阻塞当前 goroutine。
 //
 // 参数：
+//   - ctx context.Context：带cancel的context。
 //   - handler func(channel string, payload string)：消息处理函数。
 //   - channels ...string：频道列表。
 //
 // 返回值：
 //   - error：错误信息，如果操作成功则为 nil。
-func (r *RedisClient) Subscribe(handler func(channel string, payload string), channels ...string) error {
-	ctx := context.Background()
+func (r *RedisClient) Subscribe(ctx context.Context, handler func(channel string, payload string), channels ...string) error {
 	pubsub := r.client.Subscribe(ctx, channels...)
-	defer pubsub.Close()
 
 	// 等待订阅确认
 	_, err := pubsub.Receive(ctx)
@@ -827,11 +827,22 @@ func (r *RedisClient) Subscribe(handler func(channel string, payload string), ch
 		return err
 	}
 
-	// 处理订阅频道中的消息
-	for msg := range pubsub.Channel() {
-		handler(msg.Channel, msg.Payload)
+	for {
+		select {
+		case <-ctx.Done():
+			// 取消订阅并关闭 pubsub
+			pubsub.Close()
+			log.Printf("Subscribe canceled: %v", channels)
+			return nil
+		case msg, ok := <-pubsub.Channel():
+			// 检查订阅通道是否关闭
+			if !ok {
+				log.Printf("Subscribe closed: %v", channels)
+				return nil
+			}
+			handler(msg.Channel, msg.Payload)
+		}
 	}
-	return nil
 }
 
 func (r *RedisClient) GetClient() redis.UniversalClient {
