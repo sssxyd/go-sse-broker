@@ -134,7 +134,7 @@ func main() {
 	engine.Any("/token", sse.HandleToken)
 	engine.Any("/send", sse.HandleSend)
 
-	log.Printf("Server started at %s:%d\n", sse.GetIP(), config.Server.Port)
+	log.Printf("SSE-Broker Started, Listening Port: %d, Instance IP: %s\n", config.Server.Port, sse.GetIP())
 
 	// 启动服务
 	engine.Run(fmt.Sprintf(":%d", config.Server.Port))
