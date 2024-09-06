@@ -199,7 +199,6 @@ func HandleSend(c *gin.Context) {
 		}
 		device := globalInstance.getDevice(deviceId)
 		if device != nil {
-			log.Printf("Device %s is local\n", deviceId)
 			globalInstance.handleInstruction(&Instruction{
 				DeviceID: deviceId,
 				Command:  CMD_SEND_FRAME,
