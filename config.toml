@@ -1,35 +1,59 @@
 [server]
 # 服务启动端口
+# Port for the server to start on
 port = 8080
+
 # 静态文件目录，相对目录，相对于启动目录；也可以是绝对路径
+# Directory for static files, relative to the startup directory or an absolute path
 static_dir = "static"
+
 # 请求access日志路径，相对目录，相对于启动目录；也可以是绝对路径
+# Path for access log, relative to the startup directory or an absolute path
 access_log_path = "logs/access.log"
+
 # 请求error日志路径，相对目录，相对于启动目录；也可以是绝对路径
+# Path for error log, relative to the startup directory or an absolute path
 error_log_path = "logs/error.log"
+
 # 业务日志路径，相对目录，相对于启动目录；也可以是绝对路径
+# Path for application log, relative to the startup directory or an absolute path
 app_log_path = "logs/app.log"
 
 [jwt]
 # 生成token的密钥
+# Secret key for generating JWT tokens
 secret = "abc123"
+
 # token默认过期时间，单位秒
+# Default token expiration time, in seconds
 expire = 3600
 
 [redis]
 # redis地址, 单地址为单例模式， 多地址为集群模式；单例模式下，db必须设置
+# Redis addresses, a single address for standalone mode, multiple addresses for cluster mode; in standalone mode, 'db' must be set
 addrs = ["114.116.222.136:6379"]
+
 # redis密码
+# Redis password
 password = "Yfw68Test2019"
+
 # redis数据库
+# Redis database (used in standalone mode)
 db = 5
+
 # redis连接池大小
+# Size of the Redis connection pool
 pool_size = 10
 
 [sse]
 # 每个sse连接，服务端发送心跳的间隔时间
+# Heartbeat interval for each SSE connection, in seconds
 heartbeat_interval = 30
+
 # 每个设备，缓存的最大消息帧数
+# Maximum number of message frames cached per device
 device_frame_cache_size = 10
+
 # 每个设备，缓存的消息帧过期时间
+# Expiration time for cached message frames per device, in seconds
 device_frame_cache_expire = 604800
