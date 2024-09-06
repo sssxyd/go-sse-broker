@@ -167,7 +167,7 @@
     <div id="resp1" style="display: none;">
     <pre><code>{
     "code": 1,  // 1：成功，其他：失败, 全部接口均返回此格式
-    "msg": "",  // 错误信息
+    "msg": "success",  // 错误信息
     "result": "jwtToken",    // 生成的JWT Token, 该token的有效期基于ttl参数
     "micros": 189       // 接口耗时，单位微秒
     }</code></pre>
@@ -275,7 +275,7 @@
     <div id="resp2" style="display: none;">
     <pre><code>{
     "code": 1,  // 1：成功，其他：失败, 全部接口均返回此格式
-    "msg": "",  // 错误信息
+    "msg": "success",  // 错误信息
     "result": 3,    // 发送成功的设备数
     "micros": 189       // 接口耗时，单位微秒
     }</code></pre>
@@ -306,6 +306,30 @@
                     <th>说明</th>
                 </tr>
             </thead>
+            <tbody>
+                <tr>
+                    <td>X-SSE-TOKEN</td>
+                    <td>否</td>
+                    <td>String</td>
+                    <td>Query参数中包含token时，此header作废；否则以此header的值作为token</td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>X-SSE-DEVICE</td>
+                    <td>否</td>
+                    <td>String</td>
+                    <td>Query参数中包含device时，此header作废；否则以此header的值作为device</td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>X-SSE-ID</td>
+                    <td>否</td>
+                    <td>Int</td>
+                    <td>Query参数中包含id时，此header作废；否则以此header的值作为id; </td>
+                </tr>
+            </tbody>                        
         </table>
 		<h4>3.2.2. Body 参数</h3>
         <table>
@@ -321,21 +345,30 @@
             <tbody>
                 <tr>
                     <td>token</td>
-                    <td>是</td>
+                    <td>否</td>
                     <td>String</td>
-                    <td></td>
-                    <td>SSE的授权token</td>
+                    <td>Query中的token参数和header中的X-SSE-TOKEN至少有一个必须存在</td>
+                    <td>JWTToken</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>device</td>
-                    <td>是</td>
+                    <td>否</td>
                     <td>String</td>
-                    <td></td>
-                    <td>当前设备ID，不可重复</td>
+                    <td>Query中的device参数和header中的X-SSE-DEVICE至少有一个必须存在</td>
+                    <td>设备ID</td>
                 </tr>
             </tbody>
+            <tbody>
+                <tr>
+                    <td>id</td>
+                    <td>否</td>
+                    <td>int</td>
+                    <td>Query中不传则从header(X-SSE-ID)中取，取不到则不启用LastEventId机制</td>
+                    <td>LastEventId</td>
+                </tr>
+            </tbody>            
         </table>
 	</div>
 	
