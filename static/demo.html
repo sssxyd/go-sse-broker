@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Demo</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #messages {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        input {
+            min-width: 400px;
+        }
+        textarea {
+            min-width: 400px;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 第一部分：表单 -->
+    <h1>表单</h1>
+    <form id="user-form">
+        <label for="uid">用户ID:&nbsp;</label>
+        <input type="text" id="uid" name="uid" minlength="1" required><br><br>
+        
+        <label for="device_id">设备ID:&nbsp;</label>
+        <input type="text" id="device_id" name="device_id" minlength="1" required><br><br>
+
+        <label for="token">Token&nbsp;:&nbsp;</label>
+        <textarea id="token" name="token" readonly></textarea><br><br>
+        <button type="button" id="get-token">获取Token</button><br><br>
+    </form>
+
+    <!-- 第二部分：连接按钮 -->
+    <button id="connect-sse">连接</button>
+
+    <!-- 消息展示区域 -->
+    <div id="messages"></div>
+
+    <script>
+        $(document).ready(function() {
+            // 获取Token按钮点击事件
+            $('#get-token').click(function() {
+                const uid = $('#uid').val();
+                const device_id = $('#device_id').val();
+
+                if (!uid || !device_id) {
+                    alert('请填写用户ID和设备ID');
+                    return;
+                }
+
+                // 发送请求获取Token
+                $.ajax({
+                    url: '/token',
+                    method: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify({
+						uid: uid,
+						device_id: device_id
+					}),
+                    success: function(response) {
+                        // 假设响应中包含token字段
+                        $('#token').val(response.result);
+                    },
+                    error: function() {
+                        alert('获取Token失败');
+                    }
+                });
+            });
+
+            // 连接SSE服务按钮点击事件
+            $('#connect-sse').click(function() {
+                const token = $('#token').val();
+                const device_id = $('#device_id').val();
+
+                if (!token || !device_id) {
+                    alert('请先获取Token并填写设备ID');
+                    return;
+                }
+
+                // 连接SSE服务
+                const eventSource = new EventSource('/events?token=' + token + '&device=' + device_id);
+
+                // 监听消息事件
+                eventSource.onmessage = function(event) {
+                    appendMessage('message', 'Message', event.data);
+                };
+
+                // 监听自定义事件（如 'custom-event'）
+                eventSource.addEventListener('custom-event', function(event) {
+                    appendMessage('event', 'Custom Event', event.data);
+                });
+
+                // 连接关闭时
+                eventSource.onerror = function() {
+                    appendMessage('error', 'Error', '连接关闭或发生错误');
+                    eventSource.close();
+                };
+            });
+
+            // 向消息区域添加消息并滚动到底部
+            function appendMessage(type, title, data) {
+                const messageDiv = $('<div class="message"></div>');
+                messageDiv.html('<strong>' + title + ':</strong> ' + data);
+                $('#messages').append(messageDiv);
+
+                // 自动滚动到底部
+                $('#messages').scrollTop($('#messages')[0].scrollHeight);
+            }
+        });
+    </script>
+</body>
+</html>
