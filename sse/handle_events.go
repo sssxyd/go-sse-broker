@@ -56,6 +56,10 @@ func HandleEvents(c *gin.Context) {
 		return
 	}
 
+	// 发送连接成功事件
+	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_CONNECTED, deviceId)
+	flusher.Flush()
+
 	// 发送缓存的消息帧
 	if lastEventId > 0 {
 		frames := device.getCachedFrames(lastEventId)
@@ -105,11 +109,6 @@ func HandleEvents(c *gin.Context) {
 				device.offline(DCR_INSTANCE_CLOSE, instraction.Data)
 				user.handleDeviceOffline(device)
 				fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_INSTANCE_CLOSE, instraction.Data)
-				return
-			} else if instraction.Command == CMD_INSTANCE_CLEAR {
-				device.offline(DCR_INSTANCE_CLEAR, instraction.Data)
-				user.handleDeviceOffline(device)
-				fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_INSTANCE_CLEAR, instraction.Data)
 				return
 			} else {
 				log.Printf("Unknown instruction: %v\n", instraction)

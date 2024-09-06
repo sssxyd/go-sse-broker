@@ -12,7 +12,6 @@ const CMD_SEND_FRAME = "send_frame"
 const CMD_EXTRUDE_OFFLINE = "extrude_offline"
 const CMD_KICK_OFFLINE = "kick_offline"
 const CMD_INSTANCE_CLOSE = "instance_close"
-const CMD_INSTANCE_CLEAR = "instance_clear"
 
 const DCR_EXTRUDE_OFFLINE = "extrude_offline"
 const DCR_KICK_OFFLINE = "kick_offline"
@@ -27,7 +26,6 @@ const EVT_SYS_CONNECTED = "sys_connected"
 const EVT_SYS_KICK_OFFLINE = "sys_kick_offline"
 const EVT_SYS_EXTRUDE_OFFLINE = "sys_extrude_offline"
 const EVT_SYS_INSTANCE_CLOSE = "sys_instance_close"
-const EVT_SYS_INSTANCE_CLEAR = "sys_instance_clear"
 
 const PAYLOAD_HEARTBEAT = ":heartbeat"
 
