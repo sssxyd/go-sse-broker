@@ -11,9 +11,9 @@ import (
 )
 
 type TokenParams struct {
-	UID      string `json:"uid" form:"uid"`
-	DeviceID string `json:"device_id" form:"device_id"`
-	TTL      int    `json:"ttl" form:"ttl"`
+	UID    string `json:"uid" form:"uid"`
+	Device string `json:"device" form:"device"`
+	TTL    int    `json:"ttl" form:"ttl"`
 }
 
 // CreateToken 生成JWT
@@ -30,8 +30,8 @@ func HandleToken(c *gin.Context) {
 
 	duration := time.Duration(params.TTL) * time.Second
 	claims := &Claims{
-		UID:      params.UID,
-		DeviceID: params.DeviceID,
+		UID:        params.UID,
+		DeviceName: params.Device,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(duration).Unix(),
 		},

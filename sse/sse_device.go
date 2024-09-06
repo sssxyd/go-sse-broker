@@ -13,6 +13,7 @@ import (
 
 type Device struct {
 	DeviceID        string `json:"device_id"`
+	DeviceName      string `json:"device_name"`
 	UID             string `json:"uid"`
 	LoginTime       string `json:"login_time"`
 	InstanceAddress string `json:"instance_address"`
@@ -32,6 +33,7 @@ func getRedisDevice(deviceID string) *Device {
 	}
 	device := &Device{
 		DeviceID:        info["device_id"],
+		DeviceName:      info["device_name"],
 		UID:             info["uid"],
 		LoginTime:       info["login_time"],
 		InstanceAddress: info["instance_address"],
@@ -48,9 +50,10 @@ func getRedisDevice(deviceID string) *Device {
 	return device
 }
 
-func NewDevice(deviceID, uid, instanceAddress, deviceAddress string) *Device {
+func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string) *Device {
 	device := &Device{
 		DeviceID:        deviceID,
+		DeviceName:      deviceName,
 		UID:             uid,
 		LoginTime:       time.Now().Format("2006-01-02 15:04:05"),
 		InstanceAddress: instanceAddress,
@@ -68,6 +71,7 @@ func NewDevice(deviceID, uid, instanceAddress, deviceAddress string) *Device {
 	_, err = globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.HSet(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, deviceID),
 			"uid", device.UID,
+			"device", device.DeviceName,
 			"login_time", device.LoginTime,
 			"instance_address", device.InstanceAddress,
 			"device_address", device.DeviceAddress,

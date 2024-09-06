@@ -83,7 +83,7 @@
             <li>请求地址：<strong>/token</strong></li>
             <li>请求方式: <strong>POST/GET</strong></li>
             <li>返回数据类型：<strong>application/json</strong></li>
-            <li>用途：根据参数生成JWToken，用于SSE连接鉴权</li>
+            <li>用途:根据参数生成JWToken,用于SSE连接鉴权</li>
         </ul>
     </div>
 
@@ -131,11 +131,11 @@
             </tbody>
             <tbody>
                 <tr>
-                    <td>device_id</td>
+                    <td>device</td>
                     <td>否</td>
                     <td>string</td>
                     <td></td>
-                    <td>客户端设备ID</td>
+                    <td>客户端设备编号(唯一)</td>
                 </tr>
             </tbody>	
             <tbody>
@@ -143,7 +143,7 @@
                     <td>ttl</td>
                     <td>否</td>
                     <td>int</td>
-                    <td>单位秒，默认3600秒</td>
+                    <td>单位秒,默认3600秒</td>
                     <td>生成的token在ttl秒后过期</td>
                 </tr>
             </tbody>			
@@ -156,7 +156,7 @@
         POST /token HTTP/1.1
         {
             "uid": "115",
-            "device_id": "x1987"
+            "device": "x1987"
         }
         //或者
         GET /token?uid=1556
@@ -166,7 +166,7 @@
     <h3>1.4. 返回示例 <button class="round-button" onclick="toggleCodeBlock(this, 'resp1')">+</button></h3>
     <div id="resp1" style="display: none;">
     <pre><code>{
-    "code": 1,  // 1：成功，其他：失败, 全部接口均返回此格式
+    "code": 1,  // 1:成功，其他:失败, 全部接口均返回此格式
     "msg": "success",  // 错误信息
     "result": "jwtToken",    // 生成的JWT Token, 该token的有效期基于ttl参数
     "micros": 189       // 接口耗时，单位微秒
@@ -243,16 +243,16 @@
                     <td>否</td>
                     <td>String</td>
                     <td></td>
-                    <td>用户ID，多个uid以英文逗号分隔</td>
+                    <td>用户ID, 多个uid以英文逗号分隔</td>
                 </tr>
             </tbody>	
             <tbody>
                 <tr>
-                    <td>device_id</td>
+                    <td>device</td>
                     <td>否</td>
                     <td>String</td>
                     <td></td>
-                    <td>设备ID，多个设备ID以英文逗号分隔</td>
+                    <td>设备编号，多个设备编号以英文逗号分隔</td>
                 </tr>
             </tbody>			
         </table>
@@ -274,7 +274,7 @@
     <h3>2.4. 返回示例 <button class="round-button" onclick="toggleCodeBlock(this, 'resp2')">+</button></h3>
     <div id="resp2" style="display: none;">
     <pre><code>{
-    "code": 1,  // 1：成功，其他：失败, 全部接口均返回此格式
+    "code": 1,  // 1:成功，其他:失败, 全部接口均返回此格式
     "msg": "success",  // 错误信息
     "result": 3,    // 发送成功的设备数
     "micros": 189       // 接口耗时，单位微秒

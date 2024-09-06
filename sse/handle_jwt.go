@@ -10,8 +10,8 @@ import (
 )
 
 type Claims struct {
-	UID      string `json:"uid"`
-	DeviceID string `json:"deviceId"`
+	UID        string `json:"uid"`
+	DeviceName string `json:"device_name"`
 	jwt.StandardClaims
 }
 
@@ -31,9 +31,9 @@ func TokenCheck() gin.HandlerFunc {
 		if tokenString == "" {
 			tokenString = c.GetHeader("X-SSE-Token")
 		}
-		deviceId := c.DefaultQuery("device", "")
-		if deviceId == "" {
-			deviceId = c.GetHeader("X-SSE-Device")
+		deviceName := c.DefaultQuery("device", "")
+		if deviceName == "" {
+			deviceName = c.GetHeader("X-SSE-Device")
 		}
 		lastEventID := c.DefaultQuery("id", "")
 		if lastEventID == "" {
@@ -43,7 +43,7 @@ func TokenCheck() gin.HandlerFunc {
 		if err != nil {
 			lastId = 0
 		}
-		if tokenString == "" || deviceId == "" {
+		if tokenString == "" || deviceName == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token and device is required"})
 			c.Abort()
 			return
@@ -54,7 +54,7 @@ func TokenCheck() gin.HandlerFunc {
 			return jwtSecret, nil
 		})
 
-		if deviceId != "" && claims.DeviceID != "" && claims.DeviceID != deviceId {
+		if deviceName != "" && claims.DeviceName != "" && claims.DeviceName != deviceName {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":   401,
 				"msg":    "Invalid device",
@@ -73,7 +73,8 @@ func TokenCheck() gin.HandlerFunc {
 		// 将userId保存到上下文中
 		c.Set("_uid", claims.UID)
 		// 对deviceId进行MD5，防止乱写
-		c.Set("_device_id", funcs.MD5(deviceId))
+		c.Set("_device_name", deviceName)
+		c.Set("_device_id", funcs.MD5(deviceName))
 		// 将lastEventID保存到上下文中
 		c.Set("_last_event_id", lastId)
 		c.Next()

@@ -53,9 +53,9 @@
             // 获取Token按钮点击事件
             $('#get-token').click(function() {
                 const uid = $('#uid').val();
-                const device_id = $('#device_id').val();
+                const device = $('#device_id').val();
 
-                if (!uid || !device_id) {
+                if (!uid || !device) {
                     alert('请填写用户ID和设备ID');
                     return;
                 }
@@ -67,7 +67,7 @@
 					contentType: 'application/json',
 					data: JSON.stringify({
 						uid: uid,
-						device_id: device_id
+						device: device
 					}),
                     success: function(response) {
                         // 假设响应中包含token字段

@@ -14,22 +14,22 @@ import (
 )
 
 type SendFrameParams struct {
-	UID      string `json:"uid" form:"uid"`
-	DeviceID string `json:"device_id" form:"device_id"`
-	Event    string `json:"event" form:"event"`
-	Data     string `json:"data" form:"data"`
+	UID    string `json:"uid" form:"uid"`
+	Device string `json:"device" form:"device"`
+	Event  string `json:"event" form:"event"`
+	Data   string `json:"data" form:"data"`
 }
 
-func collectDeviceIds(uid_str string, device_id_str string) []string {
+func collectDeviceIds(uid_str string, device_name_str string) []string {
 	uids := strings.Split(uid_str, ",")
-	deviceIds := strings.Split(device_id_str, ",")
+	deviceNames := strings.Split(device_name_str, ",")
 	targetDeviceSet := make(map[string]bool)
-	for _, deviceId := range deviceIds {
-		if deviceId == "" {
+	for _, deviceName := range deviceNames {
+		if deviceName == "" {
 			continue
 		}
 		// 对设备ID进行MD5哈希
-		deviceId = funcs.MD5(deviceId)
+		deviceId := funcs.MD5(deviceName)
 		targetDeviceSet[deviceId] = true
 	}
 	var userDeviceSetKeys []string
@@ -182,12 +182,12 @@ func HandleSend(c *gin.Context) {
 		})
 		return
 	}
-	sendAll := params.UID == "" && params.DeviceID == ""
+	sendAll := params.UID == "" && params.Device == ""
 	var deviceIds []string
 	if sendAll {
 		deviceIds = getAllDeviceIds()
 	} else {
-		deviceIds = collectDeviceIds(params.UID, params.DeviceID)
+		deviceIds = collectDeviceIds(params.UID, params.Device)
 	}
 
 	total := len(deviceIds)

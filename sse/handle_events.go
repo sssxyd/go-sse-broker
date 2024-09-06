@@ -17,6 +17,7 @@ func HandleEvents(c *gin.Context) {
 
 	uid := c.GetString("_uid")
 	deviceId := c.GetString("_device_id")
+	deviceName := c.GetString("_device_name")
 	lastEventId := c.GetInt64("_last_event_id")
 	address := c.Request.RemoteAddr
 
@@ -44,7 +45,7 @@ func HandleEvents(c *gin.Context) {
 		}
 	}
 
-	device := NewDevice(deviceId, uid, globalInstance.Address, address)
+	device := NewDevice(deviceId, deviceName, uid, globalInstance.Address, address)
 	device.online()
 	user := NewUser(uid)
 	user.handleDeviceOnline(device)
@@ -57,7 +58,7 @@ func HandleEvents(c *gin.Context) {
 	}
 
 	// 发送连接成功事件
-	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_CONNECTED, deviceId)
+	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_CONNECTED, deviceName)
 	flusher.Flush()
 
 	// 发送缓存的消息帧
