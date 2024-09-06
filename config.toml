@@ -31,11 +31,11 @@ expire = 3600
 [redis]
 # redis地址, 单地址为单例模式， 多地址为集群模式；单例模式下，db必须设置
 # Redis addresses, a single address for standalone mode, multiple addresses for cluster mode; in standalone mode, 'db' must be set
-addrs = ["114.116.222.136:6379"]
+addrs = ["192.168.11.12:6379", "192.168.11.101:6379"]
 
 # redis密码
 # Redis password
-password = "Yfw68Test2019"
+password = "redis_password"
 
 # redis数据库
 # Redis database (used in standalone mode)
