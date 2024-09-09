@@ -35,8 +35,6 @@ func handleShutdown() {
 
 	sse.Stop()
 
-	time.Sleep(3 * time.Second)
-
 	sse.Dispose()
 
 	// 关闭日志文件

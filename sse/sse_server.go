@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	globalConfig   *Config
-	globalInstance *ServiceInstance
-	globalRedis    *funcs.RedisClient
-	deviceChannels = &sync.Map{}
+	globalConfig    *Config
+	globalInstance  *ServiceInstance
+	globalRedis     *funcs.RedisClient
+	deviceChannels  = &sync.Map{}
+	deviceChannelWG sync.WaitGroup // 用于等待所有goroutines完成的WaitGroup
 )
 
 func Start(config Config) {
@@ -34,6 +35,7 @@ func Stop() {
 }
 
 func Dispose() {
+	// 容错，防止有的channel没有关闭
 	deviceChannels.Range(func(key, value interface{}) bool {
 		close(value.(chan *Instruction))
 		return true

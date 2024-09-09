@@ -118,18 +118,22 @@ func (s *ServiceInstance) stop() {
 	s.TopicCancel()
 
 	// 主动关闭本实例上连接的全部设备
-	s.Devices.Range(func(key, value interface{}) bool {
-		device, ok := value.(*Device)
+	deviceChannels.Range(func(key, value interface{}) bool {
+		deviceId := key.(string)
+		channel, ok := value.(chan *Instruction)
 		if ok {
-			s.handleInstruction(&Instruction{
-				DeviceID: device.DeviceID,
+			ins := &Instruction{
+				DeviceID: deviceId,
 				Command:  CMD_INSTANCE_CLOSE,
 				Event:    "",
 				Data:     s.Address,
-			})
+			}
+			channel <- ins
 		}
 		return true
 	})
+	// 等待所有设备连接关闭
+	deviceChannelWG.Wait()
 	log.Printf("Instance %s stopped\n", s.Address)
 }
 

@@ -82,7 +82,9 @@ func HandleEvents(c *gin.Context) {
 	defer ticker.Stop()
 
 	channel := make(chan *Instruction)
+
 	deviceChannels.Store(deviceId, channel)
+	deviceChannelWG.Add(1)
 
 	for {
 		select {
@@ -100,16 +102,19 @@ func HandleEvents(c *gin.Context) {
 				device.offline(DCR_KICK_OFFLINE, instraction.Data)
 				user.handleDeviceOffline(device)
 				fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_KICK_OFFLINE, instraction.Data)
+				deviceChannelWG.Done()
 				return
 			} else if instraction.Command == CMD_EXTRUDE_OFFLINE {
 				device.offline(DCR_EXTRUDE_OFFLINE, instraction.Data)
 				user.handleDeviceOffline(device)
 				fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_EXTRUDE_OFFLINE, instraction.Data)
+				deviceChannelWG.Done()
 				return
 			} else if instraction.Command == CMD_INSTANCE_CLOSE {
 				device.offline(DCR_INSTANCE_CLOSE, instraction.Data)
 				user.handleDeviceOffline(device)
 				fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", EVT_SYS_INSTANCE_CLOSE, instraction.Data)
+				deviceChannelWG.Done()
 				return
 			} else {
 				log.Printf("Unknown instruction: %v\n", instraction)
@@ -122,6 +127,7 @@ func HandleEvents(c *gin.Context) {
 			if err != nil {
 				device.offline(DCR_HEARTBEAT_FAIL, "")
 				user.handleDeviceOffline(device)
+				deviceChannelWG.Done()
 				return
 			}
 			device.touch()
@@ -130,6 +136,7 @@ func HandleEvents(c *gin.Context) {
 			log.Printf("Client %s on Device %s is offline\n", address, deviceName)
 			device.offline(DCR_DISCONNECT, "")
 			user.handleDeviceOffline(device)
+			deviceChannelWG.Done()
 			return
 		}
 	}
