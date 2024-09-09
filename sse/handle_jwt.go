@@ -2,7 +2,7 @@ package sse
 
 import (
 	"net/http"
-	"sse_broker/funcs"
+	"sse-broker/funcs"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

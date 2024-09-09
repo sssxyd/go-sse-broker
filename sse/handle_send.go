@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sse_broker/funcs"
+	"sse-broker/funcs"
 	"strings"
 	"sync"
 

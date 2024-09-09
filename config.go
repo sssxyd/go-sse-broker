@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sse_broker/funcs"
+	"sse-broker/funcs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
@@ -15,10 +15,9 @@ import (
 type Config struct {
 	Server struct {
 		Port          int    `toml:"port"`
-		StaticDir     string `toml:"static_dir"`
 		AccessLogPath string `toml:"access_log_path"`
 		ErrorLogPath  string `toml:"error_log_path"`
-		AppLogPath    string `toml:"app_log_path"`
+		BrokerLogPath string `toml:"broker_log_path"`
 	} `toml:"server"`
 	JWT struct {
 		Secret string `toml:"secret"`
@@ -37,11 +36,15 @@ type Config struct {
 	} `toml:"sse"`
 }
 
-func loadConfig(baseDir string) (*Config, error) {
+func loadConfig(baseDir string, configPath string) (*Config, error) {
+	if !filepath.IsAbs(configPath) {
+		configPath = filepath.Join(baseDir, configPath)
+	}
 	config := Config{}
-	file, err := os.Open(filepath.Join(baseDir, "config.toml"))
+	file, err := os.Open(configPath)
 	if err != nil {
-		fmt.Printf("Failed to open config file: %v", err)
+		fmt.Printf("Failed to open config file %s: %v", configPath, err)
+		return nil, err
 	}
 	defer file.Close()
 	decoder := toml.NewDecoder(file)
@@ -52,14 +55,6 @@ func loadConfig(baseDir string) (*Config, error) {
 		config.SSE.HeartbeatInterval = 30
 	}
 	return &config, nil
-}
-
-func touchStaticDir(baseDir string, config *Config) {
-	// static dir
-	if !filepath.IsAbs(config.Server.StaticDir) {
-		config.Server.StaticDir = filepath.Join(baseDir, config.Server.StaticDir)
-	}
-	funcs.TouchDir(config.Server.StaticDir)
 }
 
 func initLogger(baseDir string, config *Config) (accessLogFile, errorLogFile, appLogFile *os.File) {
@@ -86,9 +81,9 @@ func initLogger(baseDir string, config *Config) (accessLogFile, errorLogFile, ap
 	gin.DefaultErrorWriter = io.MultiWriter(errorLogFile, os.Stderr)
 
 	// app log path
-	if !filepath.IsAbs(config.Server.AppLogPath) {
-		config.Server.AppLogPath = filepath.Join(baseDir, config.Server.AppLogPath)
+	if !filepath.IsAbs(config.Server.BrokerLogPath) {
+		config.Server.BrokerLogPath = filepath.Join(baseDir, config.Server.BrokerLogPath)
 	}
-	appLogFile = funcs.InitializeLogFile(config.Server.AppLogPath, true)
+	appLogFile = funcs.InitializeLogFile(config.Server.BrokerLogPath, true)
 	return accessLogFile, errorLogFile, appLogFile
 }

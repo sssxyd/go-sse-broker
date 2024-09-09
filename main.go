@@ -1,13 +1,15 @@
 package main
 
 import (
+	"embed"
+	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"sse_broker/funcs"
-	"sse_broker/sse"
+	"sse-broker/funcs"
+	"sse-broker/sse"
 	"syscall"
 	"time"
 
@@ -20,6 +22,9 @@ var (
 	errorLogFile  *os.File
 	appLogFile    *os.File
 )
+
+//go:embed static/*
+var staticFiles embed.FS
 
 // 监测服务关闭信号
 func handleShutdown() {
@@ -61,14 +66,17 @@ func init() {
 	// 	windows.SetConsoleMode(handle, mode)
 	// }
 
+	var configPath string
+	flag.StringVar(&configPath, "config", "/etc/sse-broker/config.toml", "config file path")
+	flag.Parse()
+
 	baseDir := funcs.GetExecutionPath()
-	cfg, err := loadConfig(baseDir)
+	cfg, err := loadConfig(baseDir, configPath)
 	if err != nil {
 		fmt.Printf("Failed to load config: %v\n", err)
 		panic(fmt.Sprintf("Failed to load config: %v\n", err))
 	}
 	config = cfg
-	touchStaticDir(baseDir, config)
 	a, e, p := initLogger(baseDir, config)
 	accessLogFile = a
 	errorLogFile = e
@@ -109,22 +117,20 @@ func main() {
 	engine := gin.Default()
 
 	// 设置静态文件目录
-	static_dir := filepath.Join(funcs.GetExecutionPath(), "static")
-	engine.Static("/static", static_dir)
+	// 将嵌入的文件系统转换为 http.FileSystem
+	staticFS := http.FS(staticFiles)
+	engine.StaticFS("/static", staticFS)
 	engine.GET("/", func(ctx *gin.Context) {
-		ctx.File(filepath.Join(static_dir, "index.html"))
+		ctx.FileFromFS("static/index.html", staticFS)
 	})
 	engine.GET("/index.html", func(ctx *gin.Context) {
-		ctx.File(filepath.Join(static_dir, "index.html"))
+		ctx.Redirect(http.StatusFound, "/static/index.html")
 	})
 	engine.GET("/favicon.ico", func(ctx *gin.Context) {
-		ctx.File(filepath.Join(static_dir, "favicon.ico"))
+		ctx.Redirect(http.StatusFound, "/static/favicon.ico")
 	})
 	engine.GET("/demo", func(ctx *gin.Context) {
-		ctx.File(filepath.Join(static_dir, "demo.html"))
-	})
-	engine.GET("/demo.html", func(ctx *gin.Context) {
-		ctx.File(filepath.Join(static_dir, "demo.html"))
+		ctx.Redirect(http.StatusFound, "/static/demo.html")
 	})
 
 	engine.GET("/events", sse.TokenCheck(), sse.HandleEvents)

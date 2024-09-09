@@ -3,7 +3,7 @@ package sse
 import (
 	"fmt"
 	"log"
-	"sse_broker/funcs"
+	"sse-broker/funcs"
 	"strings"
 	"sync"
 )

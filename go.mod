@@ -1,4 +1,4 @@
-module sse_broker
+module sse-broker
 
 go 1.22.6
 
