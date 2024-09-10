@@ -23,9 +23,6 @@ var (
 	appLogFile    *os.File
 )
 
-//go:embed static/*
-var staticFiles embed.FS
-
 // 监测服务关闭信号
 func handleShutdown() {
 	// 创建一个 channel 来接收操作系统信号
@@ -107,6 +104,9 @@ func init() {
 	})
 }
 
+//go:embed static/**
+var staticFiles embed.FS
+
 func main() {
 	// 设置 Gin 运行模式为 release
 	gin.SetMode(gin.ReleaseMode)
@@ -116,25 +116,25 @@ func main() {
 	// 创建Gin引擎
 	engine := gin.Default()
 
-	// 设置静态文件目录
-	// 将嵌入的文件系统转换为 http.FileSystem
-	staticFS := http.FS(staticFiles)
-	engine.StaticFS("/static", staticFS)
-	engine.GET("/", func(ctx *gin.Context) {
-		ctx.FileFromFS("static/index.html", staticFS)
+	// 设置静态文件路由
+	engine.GET("/static/*filepath", func(ctx *gin.Context) {
+		staticServer := http.FileServer(http.FS(staticFiles))
+		staticServer.ServeHTTP(ctx.Writer, ctx.Request)
 	})
-	engine.GET("/index.html", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusFound, "/static/index.html")
+	engine.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusMovedPermanently, "/static/index.html")
 	})
 	engine.GET("/favicon.ico", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusFound, "/static/favicon.ico")
-	})
-	engine.GET("/demo", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusFound, "/static/demo.html")
+		favicon, err := staticFiles.ReadFile("static/favicon.ico")
+		if err != nil {
+			ctx.String(http.StatusNotFound, "Favicon not found")
+			return
+		}
+		ctx.Data(http.StatusOK, "image/x-icon", favicon)
 	})
 
+	// 设置API路由
 	engine.GET("/events", sse.TokenCheck(), sse.HandleEvents)
-
 	engine.Any("/token", sse.HandleToken)
 	engine.Any("/send", sse.HandleSend)
 

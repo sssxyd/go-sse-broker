@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,83 +74,84 @@
     </style>
 </head>
 <body>
-<h1 style="text-align: center;">SSE-Broker接口文档</h1>
-<h2>1. 获取Token <button class="round-button" onclick="toggleCodeBlock(this, 'api1')">+</button></h1>
+<h1 style="text-align: center;">SSE-Broker API Documentation</h1>
+<h2><a href="demo.html">Demo</a></h2>
+<h2>1. Get Token <button class="round-button" onclick="toggleCodeBlock(this, 'api1')">+</button></h1>
 <div id="api1" style="display: none;">
-    <h3>1.1. 接口描述 <button class="round-button" onclick="toggleCodeBlock(this, 'desc1')">-</button></h3>
+    <h3>1.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc1')">-</button></h3>
     <div id="desc1">
         <ul>
-            <li>请求地址：<strong>/token</strong></li>
-            <li>请求方式: <strong>POST/GET</strong></li>
-            <li>返回数据类型：<strong>application/json</strong></li>
-            <li>用途:根据参数生成JWToken,用于SSE连接鉴权</li>
+            <li>Endpoint: <strong>/token</strong></li>
+            <li>Method: <strong>POST/GET</strong></li>
+            <li>Response Type: <strong>application/json</strong></li>
+            <li>Purpose: Generate a JWT Token based on the parameters for SSE connection authentication.</li>
         </ul>
     </div>
 
-    <h3>1.2. 请求参数 <button class="round-button" onclick="toggleCodeBlock(this, 'params1')">+</button></h3>
+    <h3>1.2. Request Parameters <button class="round-button" onclick="toggleCodeBlock(this, 'params1')">+</button></h3>
     <div id="params1" style="display: none;">
-        <h4>1.2.1. Header 参数(POST时必须)</h3>
+        <h4>1.2.1. Header Parameters (Required for POST)</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型/参数值</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type/Value</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>Content-Type</td>
-                    <td>是</td>
+                    <td>Yes</td>
                     <td>application/json</td>
                     <td>POST JSON</td>
                 </tr>
             </tbody>
         </table>
 
-        <h4>1.2.2. Body 参数(POST时必须)</h3>
+        <h4>1.2.2. Body Parameters (Required for POST)</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型</th>
-                    <th>限制条件</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Restrictions</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>uid</td>
-                    <td>是</td>
+                    <td>Yes</td>
                     <td>string</td>
                     <td></td>
-                    <td>用户ID</td>
+                    <td>User ID</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>device</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>string</td>
                     <td></td>
-                    <td>客户端设备编号(唯一)</td>
+                    <td>Client device ID (unique)</td>
                 </tr>
-            </tbody>	
+            </tbody>  
             <tbody>
                 <tr>
                     <td>ttl</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>int</td>
-                    <td>单位秒,默认3600秒</td>
-                    <td>生成的token在ttl秒后过期</td>
+                    <td>Seconds, default 3600 seconds</td>
+                    <td>Token expiration time in ttl seconds</td>
                 </tr>
-            </tbody>			
+            </tbody>          
         </table>
     </div>
 
-    <h3>1.3. 请求示例 <button class="round-button" onclick="toggleCodeBlock(this, 'req1')">+</button></h3>
+    <h3>1.3. Request Example <button class="round-button" onclick="toggleCodeBlock(this, 'req1')">+</button></h3>
     <div id="req1" style="display: none;">
     <pre><code>
         POST /token HTTP/1.1
@@ -158,221 +159,221 @@
             "uid": "115",
             "device": "x1987"
         }
-        //或者
+        // or
         GET /token?uid=1556
     </code></pre>
     </div>
 
-    <h3>1.4. 返回示例 <button class="round-button" onclick="toggleCodeBlock(this, 'resp1')">+</button></h3>
+    <h3>1.4. Response Example <button class="round-button" onclick="toggleCodeBlock(this, 'resp1')">+</button></h3>
     <div id="resp1" style="display: none;">
     <pre><code>{
-    "code": 1,  // 1:成功，其他:失败, 全部接口均返回此格式
-    "msg": "success",  // 错误信息
-    "result": "jwtToken",    // 生成的JWT Token, 该token的有效期基于ttl参数
-    "micros": 189       // 接口耗时，单位微秒
+    "code": 1,  // 1: success, others: failure, all APIs return this format
+    "msg": "success",  // Error message
+    "result": "jwtToken",    // Generated JWT Token, validity based on ttl
+    "micros": 189       // API processing time in microseconds
     }</code></pre>
     </div>
 </div>
 
-<h2>2. 发送消息 <button class="round-button" onclick="toggleCodeBlock(this, 'api2')">+</button></h1>
+<h2>2. Send Message <button class="round-button" onclick="toggleCodeBlock(this, 'api2')">+</button></h1>
 <div id="api2" style="display: none;">
-    <h3>2.1. 接口描述 <button class="round-button" onclick="toggleCodeBlock(this, 'desc2')">-</button></h3>
+    <h3>2.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc2')">-</button></h3>
     <div id="desc2">
         <ul>
-            <li>请求地址：<strong>/send</strong></li>
-            <li>请求方式: <strong>GET/POST</strong></li>
-            <li>返回数据类型：<strong>application/json</strong></li>
-            <li>向指定uid/deviceId/全部连接的设备,发送事件或消息</li>
+            <li>Endpoint: <strong>/send</strong></li>
+            <li>Method: <strong>GET/POST</strong></li>
+            <li>Response Type: <strong>application/json</strong></li>
+            <li>Send an event or message to specified uid/deviceId/all connected devices</li>
         </ul>
     </div>
 
-    <h3>2.2. 请求参数 <button class="round-button" onclick="toggleCodeBlock(this, 'params2')">+</button></h3>
+    <h3>2.2. Request Parameters <button class="round-button" onclick="toggleCodeBlock(this, 'params2')">+</button></h3>
     <div id="params2" style="display: none;">
-        <h4>2.2.1. Header(POST时必须)</h3>
+        <h4>2.2.1. Header (Required for POST)</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型/参数值</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type/Value</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>Content-Type</td>
-                    <td>是</td>
+                    <td>Yes</td>
                     <td>application/json</td>
                     <td>POST JSON</td>
                 </tr>
             </tbody>
         </table>
 
-        <h4>2.2.2. Body 参数</h3>
+        <h4>2.2.2. Body Parameters</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型</th>
-                    <th>限制条件</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Restrictions</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>data</td>
-                    <td>是</td>
+                    <td>Yes</td>
                     <td>String</td>
                     <td></td>
-                    <td>消息内容</td>
+                    <td>Message content</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>event</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
                     <td></td>
-                    <td>事件名称</td>
+                    <td>Event name</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>uid</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
                     <td></td>
-                    <td>用户ID, 多个uid以英文逗号分隔</td>
+                    <td>User ID, multiple uids separated by commas</td>
                 </tr>
-            </tbody>	
+            </tbody>  
             <tbody>
                 <tr>
                     <td>device</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
                     <td></td>
-                    <td>设备编号，多个设备编号以英文逗号分隔</td>
+                    <td>Device ID, multiple device IDs separated by commas</td>
                 </tr>
-            </tbody>			
+            </tbody>          
         </table>
     </div>    
 
-    <h3>2.3. 请求示例 <button class="round-button" onclick="toggleCodeBlock(this, 'req2')">+</button></h3>
+    <h3>2.3. Request Example <button class="round-button" onclick="toggleCodeBlock(this, 'req2')">+</button></h3>
     <div id="req2" style="display: none;">
     <pre><code>
         POST /send HTTP/1.1
         {
             "uid": "115",
-            "data": "测试"
+            "data": "test"
         }
-        //或者
+        // or
         GET /send?uid=1556&data=abc
     </code></pre>
     </div>
 
-    <h3>2.4. 返回示例 <button class="round-button" onclick="toggleCodeBlock(this, 'resp2')">+</button></h3>
+    <h3>2.4. Response Example <button class="round-button" onclick="toggleCodeBlock(this, 'resp2')">+</button></h3>
     <div id="resp2" style="display: none;">
     <pre><code>{
-    "code": 1,  // 1:成功，其他:失败, 全部接口均返回此格式
-    "msg": "success",  // 错误信息
-    "result": 3,    // 发送成功的设备数
-    "micros": 189       // 接口耗时，单位微秒
+    "code": 1,  // 1: success, others: failure, all APIs return this format
+    "msg": "success",  // Error message
+    "result": 3,    // Number of devices the message was successfully sent to
+    "micros": 189       // API processing time in microseconds
     }</code></pre>
     </div>
 </div>
 
 
-<h2>3. SSE连接 <button class="round-button" onclick="toggleCodeBlock(this, 'api3')">+</button></h1>
+<h2>3. SSE Connection <button class="round-button" onclick="toggleCodeBlock(this, 'api3')">+</button></h1>
 <div id="api3" style="display: none;">
-    <h3>3.1. 接口描述 <button class="round-button" onclick="toggleCodeBlock(this, 'desc3')">-</button></h3>
+    <h3>3.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc3')">-</button></h3>
     <div id="desc3">
         <ul>
-            <li>请求地址：<strong>/events</strong></li>
-            <li>请求方式: <strong>GET</strong></li>
-            <li>用途：无参，客户端连接SSE服务器的地址，也是唯一需要暴露到外网的接口</li>
+            <li>Endpoint: <strong>/events</strong></li>
+            <li>Method: <strong>GET</strong></li>
+            <li>Purpose: No parameters required, this is the endpoint for the client to connect to the SSE server, and the only one that needs to be exposed to the public.</li>
         </ul>
     </div>
 
-    <h3>3.2. 请求参数 <button class="round-button" onclick="toggleCodeBlock(this, 'params3')">+</button></h3>
+    <h3>3.2. Request Parameters <button class="round-button" onclick="toggleCodeBlock(this, 'params3')">+</button></h3>
     <div id="params3" style="display: none;">
-        <h4>2.2.1. Header</h3>
+        <h4>3.2.1. Header</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型/参数值</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type/Value</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>X-SSE-TOKEN</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
-                    <td>Query参数中包含token时，此header作废；否则以此header的值作为token</td>
+                    <td>If the token is in the query parameter, this header is ignored; otherwise, the value of this header is used as the token</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>X-SSE-DEVICE</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
-                    <td>Query参数中包含device时，此header作废；否则以此header的值作为device</td>
+                    <td>If the device is in the query parameter, this header is ignored; otherwise, the value of this header is used as the device</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>X-SSE-ID</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>Int</td>
-                    <td>Query参数中包含id时，此header作废；否则以此header的值作为id; </td>
+                    <td>If the id is in the query parameter, this header is ignored; otherwise, the value of this header is used as the id</td>
                 </tr>
             </tbody>                        
         </table>
-		<h4>3.2.2. Body 参数</h3>
+        <h4>3.2.2. Body Parameters</h3>
         <table>
             <thead>
                 <tr>
-                    <th>参数名</th>
-                    <th>必选</th>
-                    <th>类型</th>
-                    <th>限制条件</th>
-                    <th>说明</th>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Restrictions</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>token</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
-                    <td>Query中的token参数和header中的X-SSE-TOKEN至少有一个必须存在</td>
+                    <td>At least one of token in the query or X-SSE-TOKEN in the header must exist</td>
                     <td>JWTToken</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>device</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>String</td>
-                    <td>Query中的device参数和header中的X-SSE-DEVICE至少有一个必须存在</td>
-                    <td>设备ID</td>
+                    <td>At least one of device in the query or X-SSE-DEVICE in the header must exist</td>
+                    <td>Device ID</td>
                 </tr>
             </tbody>
             <tbody>
                 <tr>
                     <td>id</td>
-                    <td>否</td>
+                    <td>No</td>
                     <td>int</td>
-                    <td>Query中不传则从header(X-SSE-ID)中取，取不到则不启用LastEventId机制</td>
+                    <td>If not passed in the query, it is taken from the header (X-SSE-ID); if not available, the LastEventId mechanism is not used</td>
                     <td>LastEventId</td>
                 </tr>
             </tbody>            
         </table>
-	</div>
-	
-    <h3>3.3. 请求示例 <button class="round-button" onclick="toggleCodeBlock(this, 'req3')">+</button></h3>
+    </div>
+    
+    <h3>3.3. Request Example <button class="round-button" onclick="toggleCodeBlock(this, 'req3')">+</button></h3>
     <div id="req3" style="display: none;">
     <pre><code>
         GET /events?token=abcdefg&device=xuyd
