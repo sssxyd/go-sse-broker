@@ -74,7 +74,7 @@ func collectDeviceIds(uid_str string, device_name_str string) []string {
 }
 
 func getAllDeviceIds() []string {
-	instance_addresses, err := globalRedis.SMembers(KEY_INSTANCE_SET)
+	instance_addresses, err := globalRedis.SMembers(KEY_CLUSTER_INSTANCE_SET)
 	if err != nil || len(instance_addresses) == 0 {
 		return []string{}
 	}

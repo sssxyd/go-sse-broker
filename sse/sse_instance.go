@@ -72,7 +72,7 @@ func (s *ServiceInstance) clear() {
 	cmds, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.SMembers(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, s.Address))
 		// clear from instance set
-		pipe.SRem(ctx, KEY_INSTANCE_SET, s.Address)
+		pipe.SRem(ctx, KEY_CLUSTER_INSTANCE_SET, s.Address)
 		// delete instance info
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, s.Address))
 		// delete device ids
@@ -140,7 +140,7 @@ func (s *ServiceInstance) stop() {
 func (s *ServiceInstance) dispose() {
 	ctx := context.Background()
 	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.SRem(ctx, KEY_INSTANCE_SET, s.Address)
+		pipe.SRem(ctx, KEY_CLUSTER_INSTANCE_SET, s.Address)
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, s.Address))
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, s.Address))
 		return nil

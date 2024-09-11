@@ -64,7 +64,7 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 		LastTouchTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 	ctx := context.Background()
-	maxOne, err := globalRedis.Client().ZRevRangeWithScores(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_CACHE_PREFIX, deviceID), 0, 0).Result()
+	maxOne, err := globalRedis.Client().ZRevRangeWithScores(ctx, fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, deviceID), 0, 0).Result()
 	if err != nil || len(maxOne) == 0 {
 		device.LastFrameId = 0
 	} else {
@@ -148,7 +148,7 @@ func (d *Device) offline(reason string, payload string) {
 }
 
 func (d *Device) delFrameCache() {
-	globalRedis.Del(fmt.Sprintf("%s%s", KEY_DEVICE_CACHE_PREFIX, d.DeviceID))
+	globalRedis.Del(fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, d.DeviceID))
 }
 
 func (d *Device) getCachedFrames(lastEventID int64) []Frame {
@@ -156,7 +156,7 @@ func (d *Device) getCachedFrames(lastEventID int64) []Frame {
 	if globalConfig.SSE.DeviceFrameCacheSize <= 0 {
 		return frames
 	}
-	results, err := globalRedis.ZRangeByScore(fmt.Sprintf("%s%s", KEY_DEVICE_CACHE_PREFIX, d.DeviceID), fmt.Sprintf("%f", float64(lastEventID+1)), "+inf")
+	results, err := globalRedis.ZRangeByScore(fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, d.DeviceID), fmt.Sprintf("%f", float64(lastEventID+1)), "+inf")
 	if err != nil {
 		return frames
 	}
@@ -187,7 +187,7 @@ func (d *Device) addFrame(event string, data string) Frame {
 	if globalConfig.SSE.DeviceFrameCacheSize > 0 {
 		ctx := context.Background()
 		stop := -int64(globalConfig.SSE.DeviceFrameCacheSize + 1)
-		cacheKey := fmt.Sprintf("%s%s", KEY_DEVICE_CACHE_PREFIX, d.DeviceID)
+		cacheKey := fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, d.DeviceID)
 		_, err = globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(frame.ID), Member: frame.String()})
 			pipe.ZRemRangeByRank(ctx, cacheKey, 0, stop)

@@ -5,7 +5,7 @@ const KEY_INSTANCE_PREFIX = "sse_instance_"
 const KEY_INSTANCE_DEVICE_SET_PREFIX = "sse_instance_device_set_"
 const KEY_DEVICE_PREFIX = "sse_device_"
 const KEY_USER_DEVICE_SET_PREFIX = "sse_user_device_set_"
-const KEY_DEVICE_CACHE_PREFIX = "sse_device_cache_"
+const KEY_FRAME_CACHE_PREFIX = "sse_frame_cache_"
 const KEY_ONLINE_USER_SET = "sse_online_user_set"
 
 const CMD_SEND_FRAME = "send_frame"
