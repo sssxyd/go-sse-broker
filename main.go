@@ -23,6 +23,11 @@ var (
 	appLogFile    *os.File
 )
 
+//go:embed static/**
+var staticFiles embed.FS
+
+const version = "1.0.1"
+
 // 监测服务关闭信号
 func handleShutdown() {
 	// 创建一个 channel 来接收操作系统信号
@@ -63,10 +68,29 @@ func init() {
 	// 	windows.SetConsoleMode(handle, mode)
 	// }
 
+	var shortConfig string
 	var configPath string
-	flag.StringVar(&configPath, "config", "/etc/sse-broker/config.toml", "config file path")
+	shortVersion := flag.Bool("v", false, "show version")
+	versionFlag := flag.Bool("version", false, "show version")
+	flag.StringVar(&shortConfig, "c", "", "config file path")
+	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
 
+	if *versionFlag || *shortVersion {
+		fmt.Printf("Version: %s\n", version)
+		os.Exit(0)
+	}
+
+	if configPath == "" {
+		configPath = shortConfig
+	}
+	if configPath == "" {
+		if os.Getenv("OS") == "Windows_NT" {
+			configPath = "config.toml"
+		} else {
+			configPath = "/etc/sse-broker/config.toml"
+		}
+	}
 	baseDir := funcs.GetExecutionPath()
 	cfg, err := loadConfig(baseDir, configPath)
 	if err != nil {
@@ -103,9 +127,6 @@ func init() {
 		},
 	})
 }
-
-//go:embed static/**
-var staticFiles embed.FS
 
 func main() {
 	// 设置 Gin 运行模式为 release
