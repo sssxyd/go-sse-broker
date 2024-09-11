@@ -56,10 +56,10 @@ password = "please_modify"
     "device": "my computer 1"
   }
   ```  
-- Response Example
+- Response Example (code 1:success, others:failure)
   ```json
   {
-    "code": 1,             # 1: success; others: failure 
+    "code": 1,            
     "msg": "success",
     "micro": 192,
     "result": "jwt token string"
@@ -87,13 +87,13 @@ password = "please_modify"
     "data": "hello"
    }
    ```
-- Response Example
+- Response Example  (code 1:success, others:failure)
   ```json
   {
-    "code": 1,             # 1: success; others: failure 
+    "code": 1,         
     "msg": "success",
     "micro": 225,
-    "result": 2            # device count
+    "result": 2       
   }
   ```
 
