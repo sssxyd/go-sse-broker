@@ -59,7 +59,7 @@ password = "please_modify"
 - Response Example
   ```json
   {
-    "code": 1,             // 1: success; others: failure 
+    "code": 1,             # 1: success; others: failure 
     "msg": "success",
     "micro": 192,
     "result": "jwt token string"
@@ -90,10 +90,10 @@ password = "please_modify"
 - Response Example
   ```json
   {
-    "code": 1,             // 1: success; others: failure 
+    "code": 1,             # 1: success; others: failure 
     "msg": "success",
     "micro": 225,
-    "result": 2            // device count
+    "result": 2            # device count
   }
   ```
 
