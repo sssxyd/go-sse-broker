@@ -23,11 +23,15 @@ func HandleEvents(c *gin.Context) {
 
 	// 将本设备登录的其他连接挤下线
 	existDevice := globalInstance.getDevice(deviceId)
+	if existDevice == nil {
+		existDevice = getRedisDevice(deviceId)
+	}
 	if existDevice != nil {
 		// 同一设备上新老用户ID不一致时，删除老用户的帧缓存
 		if existDevice.UID != uid {
 			existDevice.delFrameCache()
 		}
+		log.Printf("current instance is %s, device is %v\n", globalInstance.Address, existDevice)
 		if existDevice.isRemote() {
 			DispachInstruction(existDevice.InstanceAddress, Instruction{
 				DeviceID: deviceId,

@@ -44,7 +44,7 @@ func (u *User) validateDeviceSet(deviceIds []string) []string {
 		cmds[i] = pipe.Exists(ctx, key)
 	}
 	_, err := pipe.Exec(ctx)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		log.Println("Pipeline error:", err)
 		return []string{}
 	}
@@ -52,7 +52,10 @@ func (u *User) validateDeviceSet(deviceIds []string) []string {
 	var invalidDeviceIds []string
 	for i, cmd := range cmds {
 		exists, err := cmd.Result()
-		if err != nil {
+		if err == redis.Nil {
+			log.Printf("Device %s not exists\n", deviceIds[i])
+			continue
+		} else if err != nil {
 			log.Printf("Error checking device existence: %v\n", err)
 			continue
 		}

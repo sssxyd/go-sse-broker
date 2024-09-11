@@ -31,9 +31,10 @@ func getRedisDevice(deviceID string) *Device {
 	if err != nil {
 		return nil
 	}
+	log.Printf("Get device info: %v\n", info)
 	device := &Device{
-		DeviceID:        info["device_id"],
-		DeviceName:      info["device_name"],
+		DeviceID:        deviceID,
+		DeviceName:      info["device"],
 		UID:             info["uid"],
 		LoginTime:       info["login_time"],
 		InstanceAddress: info["instance_address"],
@@ -42,11 +43,13 @@ func getRedisDevice(deviceID string) *Device {
 		LastFrameId: func() int64 {
 			id, err := strconv.ParseInt(info["last_frame_id"], 10, 64)
 			if err != nil {
+				log.Printf("Failed to parse last frame id: %v\n", err)
 				return 0
 			}
 			return id
 		}(),
 	}
+	log.Printf("Get redis device: %v\n", device)
 	return device
 }
 
@@ -86,6 +89,11 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 		return nil
 	}
 	return device
+}
+
+func (d *Device) String() string {
+	data, _ := json.Marshal(d)
+	return string(data)
 }
 
 func (d *Device) isRemote() bool {

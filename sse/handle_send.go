@@ -47,12 +47,15 @@ func collectDeviceIds(uid_str string, device_name_str string) []string {
 			cmds[i] = pipe.SMembers(ctx, key)
 		}
 		_, err := pipe.Exec(ctx)
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			log.Println("Pipeline error:", err)
 		} else {
 			for i, cmd := range cmds {
 				members, err := cmd.Result()
-				if err != nil {
+				if err == redis.Nil {
+					log.Printf("User %s has no device\n", uids[i])
+					continue
+				} else if err != nil {
 					log.Printf("Error retrieving members from set %s: %v\n", userDeviceSetKeys[i], err)
 					continue
 				}
@@ -83,14 +86,17 @@ func getAllDeviceIds() []string {
 		cmds[i] = pipe.SMembers(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, address))
 	}
 	_, err = pipe.Exec(ctx)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		log.Println("Pipeline error:", err)
 		return []string{}
 	}
 	var deviceIds []string
-	for _, cmd := range cmds {
+	for i, cmd := range cmds {
 		members, err := cmd.Result()
-		if err != nil {
+		if err == redis.Nil {
+			log.Printf("Instance %s has no device\n", instance_addresses[i])
+			continue
+		} else if err != nil {
 			log.Printf("Error retrieving members from set: %v\n", err)
 			continue
 		}
@@ -108,18 +114,21 @@ func splitDeviceWithInstanceAddressBatch(deviceIds []string, instanceDeviceMap *
 
 	cmds := make([]*redis.StringCmd, len(deviceIds))
 	for i, deviceId := range deviceIds {
-		cmds[i] = pipe.HGet(ctx, fmt.Sprintf("%s%s", "KEY_DEVICE_PREFIX_", deviceId), "instance_address")
+		cmds[i] = pipe.HGet(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, deviceId), "instance_address")
 	}
 
 	_, err := pipe.Exec(ctx)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		log.Println("Pipeline error:", err)
 		return
 	}
 
 	for i, cmd := range cmds {
 		address, err := cmd.Result()
-		if err != nil {
+		if err == redis.Nil {
+			log.Printf("Device %s not found\n", deviceIds[i])
+			continue
+		} else if err != nil {
 			log.Printf("Error retrieving instance address for device %s: %v\n", deviceIds[i], err)
 			continue
 		}

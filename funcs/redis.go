@@ -819,6 +819,7 @@ func (r *RedisClient) Publish(channel string, message interface{}) error {
 // 返回值：
 //   - error：错误信息，如果操作成功则为 nil。
 func (r *RedisClient) Subscribe(ctx context.Context, handler func(channel string, payload string), channels ...string) error {
+	log.Printf("Subscribe Redis Channels: %v", channels)
 	pubsub := r.client.Subscribe(ctx, channels...)
 
 	// 等待订阅确认
@@ -840,6 +841,7 @@ func (r *RedisClient) Subscribe(ctx context.Context, handler func(channel string
 				log.Printf("Subscribe closed: %v", channels)
 				return nil
 			}
+			log.Printf("Message: %v\n", msg)
 			handler(msg.Channel, msg.Payload)
 		}
 	}

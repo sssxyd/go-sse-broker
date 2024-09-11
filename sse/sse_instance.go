@@ -154,12 +154,8 @@ func (s *ServiceInstance) getDevice(deviceID string) *Device {
 	if deviceID == "" {
 		return nil
 	}
-	// 添加设备
 	device, ok := s.Devices.Load(deviceID)
-	if !ok {
-		device = getRedisDevice(deviceID)
-	}
-	if device != nil {
+	if ok {
 		device, ok := device.(*Device)
 		if ok {
 			return device

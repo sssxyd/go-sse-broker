@@ -5,15 +5,15 @@ port = 8080
 
 # 请求access日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for access log, relative to the startup directory or an absolute path
-access_log_path = "/var/log/sse-broker/access.log"
+access_log_path = "logs/access.log"
 
 # 请求error日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for error log, relative to the startup directory or an absolute path
-error_log_path = "/var/log/sse-broker/error.log"
+error_log_path = "logs/error.log"
 
 # 业务日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for application log, relative to the startup directory or an absolute path
-broker_log_path = "/var/log/sse-broker/broker.log"
+broker_log_path = "logs/broker.log"
 
 [jwt]
 # 多个broker节点，必须保持一致;
@@ -41,11 +41,11 @@ password = "please_modify"
 
 # redis数据库;
 # Redis database (used in standalone mode); 
-db = 5
+db = 0
 
-# redis连接池大小
-# Size of the Redis connection pool
-pool_size = 10
+# redis连接池大小，0表示默认值 cpu核数*10
+# Size of the Redis connection pool, 0 indicates the default value (10 * number of CPU cores)
+pool_size = 0
 
 [sse]
 # 多个broker节点，必须保持一致;
