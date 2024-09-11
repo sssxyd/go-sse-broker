@@ -19,15 +19,13 @@ func dispatchInstructionBatch(channel string, instructions []Instruction) {
 
 }
 
-func DispachInstruction(instanceAddress string, instruction Instruction) {
+func DispatchInstruction(instanceAddress string, instruction Instruction) {
 	channel := fmt.Sprintf("%s%s", TOPIC_INSTANCE_PREFIX, instanceAddress)
-	log.Printf("Dispatching instruction %s to %s\n", instruction.String(), channel)
 	globalRedis.Publish(channel, instruction.String())
 }
 
-func DispachInstructions(instanceAddress string, instructions []Instruction) {
+func DispatchInstructions(instanceAddress string, instructions []Instruction) {
 	channel := fmt.Sprintf("%s%s", TOPIC_INSTANCE_PREFIX, instanceAddress)
-	log.Printf("Dispatching %d instructions to %s\n", len(instructions), channel)
 	if len(instructions) == 1 {
 		instruction := instructions[0]
 		globalRedis.Publish(channel, instruction.String())

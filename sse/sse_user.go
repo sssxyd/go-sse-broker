@@ -23,6 +23,15 @@ func (u *User) touch() {
 	globalRedis.Expire(fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID), globalConfig.SSE.DeviceUserExistDuration)
 }
 
+func (u *User) getDeviceIds() []string {
+	deviceIds, err := globalRedis.SMembers(fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID))
+	if err != nil {
+		log.Printf("Failed to get user device set: %v\n", err)
+		return []string{}
+	}
+	return u.validateDeviceSet(deviceIds)
+}
+
 func (u *User) validateDeviceSet(deviceIds []string) []string {
 	if len(deviceIds) == 0 {
 		return []string{}

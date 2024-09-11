@@ -68,3 +68,61 @@ func (s *StateChange) String() string {
 	}
 	return string(json)
 }
+
+type UserInfo struct {
+	Online        bool     `json:"online"`
+	UID           string   `json:"uid"`
+	LonginTime    string   `json:"login_time"`
+	LastTouchTime string   `json:"last_touch_time"`
+	Devices       []Device `json:"devices"`
+}
+
+func (s *UserInfo) String() string {
+	json, err := json.Marshal(s)
+	if err != nil {
+		json = []byte("{}")
+	}
+	return string(json)
+}
+
+type DeviceInfo struct {
+	Online bool `json:"online"`
+	Device
+}
+
+func (d *DeviceInfo) String() string {
+	json, err := json.Marshal(d)
+	if err != nil {
+		json = []byte("{}")
+	}
+	return string(json)
+}
+
+type InstanceInfo struct {
+	Online      bool   `json:"online"`
+	Address     string `json:"address"`
+	DeviceCount int    `json:"device_count"`
+}
+
+func (i *InstanceInfo) String() string {
+	json, err := json.Marshal(i)
+	if err != nil {
+		json = []byte("{}")
+	}
+	return string(json)
+}
+
+type ClusterInfo struct {
+	InstanceCount int            `json:"instance_count"`
+	UserCount     int            `json:"user_count"`
+	DeviceCount   int            `json:"device_count"`
+	Instances     []InstanceInfo `json:"instances"`
+}
+
+func (c *ClusterInfo) String() string {
+	json, err := json.Marshal(c)
+	if err != nil {
+		json = []byte("{}")
+	}
+	return string(json)
+}

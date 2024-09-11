@@ -231,7 +231,7 @@ func HandleSend(c *gin.Context) {
 						Event:    params.Event,
 					})
 				}
-				DispachInstructions(address, instractions)
+				DispatchInstructions(address, instractions)
 			}()
 		}
 	}

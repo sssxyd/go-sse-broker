@@ -33,7 +33,7 @@ func HandleEvents(c *gin.Context) {
 		}
 		log.Printf("current instance is %s, device is %v\n", globalInstance.Address, existDevice)
 		if existDevice.isRemote() {
-			DispachInstruction(existDevice.InstanceAddress, Instruction{
+			DispatchInstruction(existDevice.InstanceAddress, Instruction{
 				DeviceID: deviceId,
 				Command:  CMD_EXTRUDE_OFFLINE,
 				Data:     address,
