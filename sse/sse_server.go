@@ -2,7 +2,6 @@ package sse
 
 import (
 	"fmt"
-	"log"
 	"sse-broker/funcs"
 	"strings"
 	"sync"
@@ -45,7 +44,6 @@ func Dispose() {
 }
 
 func GetIP() string {
-	log.Println(globalInstance.Address)
 	index := strings.LastIndex(globalInstance.Address, ":")
 	if index == -1 {
 		return globalInstance.Address

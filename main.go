@@ -161,9 +161,16 @@ func main() {
 	engine.Any("/info", sse.HandleInfo)
 	engine.Any("/kikc", sse.HandleKick)
 
-	log.Printf("SSE-Broker Started, Listening Port: %d, Instance IP: %s\n", config.Server.Port, sse.GetIP())
+	instanceIP := sse.GetIP()
+	instancePort := config.Server.Port
+	log.Println("-----------------------------------------------")
+	log.Printf("SSE-Broker Started, Listening Port: %d, Instance IP: %s\n", instancePort, instanceIP)
+	log.Printf("Version: %s\n", version)
+	log.Printf("Api Page: http://%s:%d/\n", instanceIP, instancePort)
+	log.Printf("Demo Page: http://%s:%d/static/demo.html\n", instanceIP, instancePort)
+	log.Println("-----------------------------------------------")
 
 	// 启动服务
-	engine.Run(fmt.Sprintf(":%d", config.Server.Port))
+	engine.Run(fmt.Sprintf(":%d", instancePort))
 
 }
