@@ -26,7 +26,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.2"
+const version = "1.0.3"
 
 // 监测服务关闭信号
 func handleShutdown() {
@@ -164,9 +164,9 @@ func main() {
 	instanceIP := sse.GetIP()
 	instancePort := config.Server.Port
 	log.Println("-----------------------------------------------")
-	log.Printf("SSE-Broker Started, Listening Port: %d, Instance IP: %s\n", instancePort, instanceIP)
-	log.Printf("Version: %s\n", version)
-	log.Printf("Api Page: http://%s:%d/\n", instanceIP, instancePort)
+	log.Printf("SSE-Broker Started, Listening Port: %d\n", instancePort)
+	log.Printf("Instance IP: %s, Instance Version: %s\n", instanceIP, version)
+	log.Printf("API  Page: http://%s:%d/\n", instanceIP, instancePort)
 	log.Printf("Demo Page: http://%s:%d/static/demo.html\n", instanceIP, instancePort)
 	log.Println("-----------------------------------------------")
 
