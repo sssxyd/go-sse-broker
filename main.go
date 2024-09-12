@@ -159,7 +159,7 @@ func main() {
 	engine.Any("/token", sse.HandleToken)
 	engine.Any("/send", sse.HandleSend)
 	engine.Any("/info", sse.HandleInfo)
-	engine.Any("/kikc", sse.HandleKick)
+	engine.Any("/kick", sse.HandleKick)
 
 	instanceIP := sse.GetIP()
 	instancePort := config.Server.Port
