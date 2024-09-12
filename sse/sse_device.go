@@ -100,6 +100,10 @@ func (d *Device) isRemote() bool {
 	return d.InstanceAddress != globalInstance.Address
 }
 
+func (d *Device) exist() bool {
+	return d.UID != ""
+}
+
 func (d *Device) touch() {
 	d.LastTouchTime = time.Now().Format("2006-01-02 15:04:05")
 	ctx := context.Background()

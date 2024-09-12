@@ -49,7 +49,7 @@ func getDeviceInfo(deviceId string, deviceName string) DeviceInfo {
 		}
 	} else {
 		return DeviceInfo{
-			Online: true,
+			Online: device.exist(),
 			Device: *device,
 		}
 	}
