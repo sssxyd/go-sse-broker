@@ -101,7 +101,7 @@ func getUserInfo(uid string) UserInfo {
 }
 
 func getInstanceInfo(ip string) InstanceInfo {
-	online, err := globalRedis.SIsMember(fmt.Sprintf("%s%s", KEY_CLUSTER_INSTANCE_SET, globalInstance.Address), ip)
+	online, err := globalRedis.SIsMember(KEY_CLUSTER_INSTANCE_SET, ip)
 	if err != nil {
 		log.Println("Failed to check instance online status:", err)
 		online = false

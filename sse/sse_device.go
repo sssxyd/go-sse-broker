@@ -70,9 +70,9 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 	} else {
 		device.LastFrameId = int64(maxOne[0].Score)
 	}
-
+	deviceKey := fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, deviceID)
 	_, err = globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.HSet(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, deviceID),
+		pipe.HSet(ctx, deviceKey,
 			"uid", device.UID,
 			"device", device.DeviceName,
 			"login_time", device.LoginTime,
@@ -81,7 +81,7 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 			"last_touch_time", device.LastTouchTime,
 			"last_frame_id", device.LastFrameId,
 		)
-		pipe.Expire(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, deviceID), globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, deviceKey, globalConfig.SSE.DeviceUserExistDuration)
 		return nil
 	})
 	if err != nil {
@@ -103,9 +103,10 @@ func (d *Device) isRemote() bool {
 func (d *Device) touch() {
 	d.LastTouchTime = time.Now().Format("2006-01-02 15:04:05")
 	ctx := context.Background()
+	deviceKey := fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, d.DeviceID)
 	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.HSet(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, d.DeviceID), "last_touch_time", d.LastTouchTime)
-		pipe.Expire(ctx, fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, d.DeviceID), globalConfig.SSE.DeviceUserExistDuration)
+		pipe.HSet(ctx, deviceKey, "last_touch_time", d.LastTouchTime)
+		pipe.Expire(ctx, deviceKey, globalConfig.SSE.DeviceUserExistDuration)
 		return nil
 	})
 	if err != nil {

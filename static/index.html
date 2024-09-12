@@ -76,7 +76,7 @@
 <body>
 <h1 style="text-align: center;">SSE-Broker API Documentation</h1>
 <h2><a href="demo.html">Demo</a></h2>
-<h2>1. Get Token <button class="round-button" onclick="toggleCodeBlock(this, 'api1')">+</button></h1>
+<h2>1. Create Token <button class="round-button" onclick="toggleCodeBlock(this, 'api1')">+</button></h2>
 <div id="api1" style="display: none;">
     <h3>1.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc1')">-</button></h3>
     <div id="desc1">
@@ -175,7 +175,7 @@
     </div>
 </div>
 
-<h2>2. Send Message <button class="round-button" onclick="toggleCodeBlock(this, 'api2')">+</button></h1>
+<h2>2. Send Message <button class="round-button" onclick="toggleCodeBlock(this, 'api2')">+</button></h2>
 <div id="api2" style="display: none;">
     <h3>2.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc2')">-</button></h3>
     <div id="desc2">
@@ -284,7 +284,7 @@
 </div>
 
 
-<h2>3. SSE Connection <button class="round-button" onclick="toggleCodeBlock(this, 'api3')">+</button></h1>
+<h2>3. SSE Connection <button class="round-button" onclick="toggleCodeBlock(this, 'api3')">+</button></h2>
 <div id="api3" style="display: none;">
     <h3>3.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc3')">-</button></h3>
     <div id="desc3">
@@ -380,7 +380,211 @@
     </code></pre>
     </div>
 </div>
-    
+
+<h2>4. Info/Status <button class="round-button" onclick="toggleCodeBlock(this, 'api4')">+</button></h2>
+<div id="api4" style="display: none;">
+    <h3>4.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc4')">-</button></h3>
+    <div id="desc4">
+        <ul>
+            <li>Endpoint: <strong>/info</strong></li>
+            <li>Method: <strong>GET/POST</strong></li>
+            <li>Response Type: <strong>application/json</strong></li>
+            <li>Query Information of uid/device/instance/cluster， If none of the three parameters (uid/device/ip) are provided, the cluster's information will be returned.</li>
+        </ul>
+    </div>
+
+    <h3>4.2. Request Parameters <button class="round-button" onclick="toggleCodeBlock(this, 'params4')">+</button></h3>
+    <div id="params4" style="display: none;">
+        <h4>4.2.1. Header (Required for POST)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type/Value</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Content-Type</td>
+                    <td>Yes</td>
+                    <td>application/json</td>
+                    <td>POST JSON</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>4.2.2. Body Parameters</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Restrictions</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>uid</td>
+                    <td>No</td>
+                    <td>String</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>device</td>
+                    <td>No</td>
+                    <td>String</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>ip</td>
+                    <td>No</td>
+                    <td>String</td>
+                    <td></td>
+                    <td>instance ip</td>
+                </tr>
+            </tbody>                        
+        </table>
+    </div>    
+
+    <h3>4.3. Request Example <button class="round-button" onclick="toggleCodeBlock(this, 'req4')">+</button></h3>
+    <div id="req4" style="display: none;">
+    <pre><code>
+        POST /info HTTP/1.1
+        {
+            "uid": "sssxyd",
+        }
+        // or
+        GET /info
+    </code></pre>
+    </div>
+
+    <h3>4.4. Response Example <button class="round-button" onclick="toggleCodeBlock(this, 'resp4')">+</button></h3>
+    <div id="resp4" style="display: none;">
+    <pre><code>{
+    "code": 1,  // 1: success, others: failure, all APIs return this format
+    "msg": "success",  
+    "result": {
+        "online": true,
+        "uid": "sssxyd",
+        "login_time": "2024-09-12 09:57:59",
+        "last_touch_time": "2024-09-12 10:13:59",
+        "devices": [
+            {
+                "device_id": "c7ea097beaf447e97f41af1c4651983c",
+                "device_name": "xuyd",
+                "uid": "sssxyd",
+                "login_time": "2024-09-12 09:57:59",
+                "instance_address": "192.168.2.22",
+                "device_address": "192.168.2.22:64321",
+                "last_touch_time": "2024-09-12 10:13:59",
+                "last_frame_id": 0
+            }
+        ]
+    },  
+    "micros": 189       
+    }</code></pre>
+    </div>
+</div>
+
+<h2>5. Kick Offline <button class="round-button" onclick="toggleCodeBlock(this, 'api5')">+</button></h2>
+<div id="api5" style="display: none;">
+    <h3>5.1. API Description <button class="round-button" onclick="toggleCodeBlock(this, 'desc5')">-</button></h3>
+    <div id="desc5">
+        <ul>
+            <li>Endpoint: <strong>/kick</strong></li>
+            <li>Method: <strong>GET/POST</strong></li>
+            <li>Response Type: <strong>application/json</strong></li>
+            <li>Kick uid/device Offline</li>
+        </ul>
+    </div>
+
+    <h3>5.2. Request Parameters <button class="round-button" onclick="toggleCodeBlock(this, 'params5')">+</button></h3>
+    <div id="params5" style="display: none;">
+        <h4>5.2.1. Header (Required for POST)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type/Value</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Content-Type</td>
+                    <td>Yes</td>
+                    <td>application/json</td>
+                    <td>POST JSON</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>5.2.2. Body Parameters</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Restrictions</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>uid</td>
+                    <td>No</td>
+                    <td>String</td>
+                    <td></td>
+                    <td>User ID, multiple uids separated by commas</td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>device</td>
+                    <td>No</td>
+                    <td>String</td>
+                    <td></td>
+                    <td>Device ID, multiple device IDs separated by commas</td>
+                </tr>
+            </tbody>                        
+        </table>
+    </div>    
+
+    <h3>5.3. Request Example <button class="round-button" onclick="toggleCodeBlock(this, 'req5')">+</button></h3>
+    <div id="req5" style="display: none;">
+    <pre><code>
+        POST /kick HTTP/1.1
+        {
+            "uid": "sssxyd",
+        }
+        // or
+        GET /kick?uid=sssxyd
+    </code></pre>
+    </div>
+
+    <h3>5.4. Response Example <button class="round-button" onclick="toggleCodeBlock(this, 'resp5')">+</button></h3>
+    <div id="resp5" style="display: none;">
+    <pre><code>{
+    "code": 1,  // 1: success, others: failure, all APIs return this format
+    "msg": "success",  
+    "result": 2,  
+    "micros": 189       
+    }</code></pre>
+    </div>
+</div>
+
 
     <script>
         function toggleCodeBlock(btn, blockId) {

@@ -1,6 +1,6 @@
 package sse
 
-const KEY_INSTANCE_SET = "sse_instance_set"
+const KEY_CLUSTER_INSTANCE_SET = "sse_cluster_instance_set"
 const KEY_INSTANCE_PREFIX = "sse_instance_"
 const KEY_INSTANCE_DEVICE_SET_PREFIX = "sse_instance_device_set_"
 const KEY_DEVICE_PREFIX = "sse_device_"

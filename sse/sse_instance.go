@@ -42,12 +42,14 @@ func NewServiceInstance(address string) *ServiceInstance {
 		DeviceCount: 0,
 		Devices:     sync.Map{},
 	}
-	globalRedis.Del(fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, address))
-	globalRedis.HSet(fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, address),
+	err := globalRedis.HSet(fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, address),
 		"address", instacne.Address,
 		"start_time", instacne.StartTime,
-		"device_count", 0,
-	)
+		"device_count", 0)
+	if err != nil {
+		log.Fatalf("Failed to create instance: %v\n", err)
+		return nil
+	}
 	return instacne
 }
 
@@ -69,14 +71,15 @@ func (s *ServiceInstance) handleInstruction(instruction *Instruction) {
 // 启动前清理本实例上次关机导致的残留及异常
 func (s *ServiceInstance) clear() {
 	ctx := context.Background()
+	deviceSetKey := fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, s.Address)
 	cmds, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.SMembers(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, s.Address))
-		// clear from instance set
+		pipe.SMembers(ctx, deviceSetKey)
+		// clear from cluster instance set
 		pipe.SRem(ctx, KEY_CLUSTER_INSTANCE_SET, s.Address)
 		// delete instance info
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, s.Address))
 		// delete device ids
-		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, s.Address))
+		pipe.Del(ctx, deviceSetKey)
 		return nil
 	})
 	if err != nil {
@@ -99,7 +102,7 @@ func (s *ServiceInstance) start() bool {
 	s.clear()
 
 	// 本实例添加到实例集合
-	_, err := globalRedis.SAdd("sse_instance_set", s.Address)
+	_, err := globalRedis.SAdd(KEY_CLUSTER_INSTANCE_SET, s.Address)
 	if err != nil {
 		log.Fatalf("Failed to start instance: %v\n", err)
 		return false

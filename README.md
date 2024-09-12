@@ -37,7 +37,7 @@ password = "please_modify"
 ```
 
 # Api
-## Get Token
+## Create Token
 - EndPoint: /token
 - HTTP Method: GET/POST
 - Parameters:  
@@ -139,7 +139,79 @@ password = "please_modify"
     };
   ```
 
-## Callback
+## Info/Status
+- EndPoint: /info
+- HTTP Method: GET/POST
+- Parameters:  
+  | name | type | required | desc |
+  |------|------|----------|------|
+  | uid  | string | false | one user id |
+  | device | string | false | one device |
+  | ip | string | false | instance ip address |  
+- Request Example  
+  - Get: Custer Info  
+    `/info`
+  - Post: User Info
+   ```json
+   {
+    "uid": "sssxyd"
+   }
+   ```
+- Response Example  (code 1:success, others:failure)
+  ```json
+  {
+    "code": 1,         
+    "msg": "success",
+    "micro": 225,
+    "result": {
+        "online": true,
+        "uid": "sssxyd",
+        "login_time": "2024-09-12 09:57:59",
+        "last_touch_time": "2024-09-12 10:13:59",
+        "devices": [
+            {
+                "device_id": "c7ea097beaf447e97f41af1c4651983c",
+                "device_name": "xuyd",
+                "uid": "sssxyd",
+                "login_time": "2024-09-12 09:57:59",
+                "instance_address": "192.168.2.22",
+                "device_address": "192.168.2.22:64321",
+                "last_touch_time": "2024-09-12 10:13:59",
+                "last_frame_id": 12
+            }
+        ]
+    }      
+  }
+  ```
+
+## Kick Offline
+- EndPoint: /kick
+- HTTP Method: GET/POST
+- Parameters:  
+  | name | type | required | desc |
+  |------|------|----------|------|
+  | uid  | string | false | multiple uids separated by commas |
+  | device | string | false | multiple devices separated by commas |
+- Request Example  
+  - Get  
+    `/kick?uid=1935,1936`
+  - Post Json
+   ```json
+   {
+    "device": "ax001,ax002",
+    "uid": "1937",
+   }
+   ```
+- Response Example  (code 1:success, others:failure)
+  ```json
+  {
+    "code": 1,         
+    "msg": "success",
+    "micro": 225,
+    "result": 6       
+  }
+
+# Callback
 **Please Subscribe Redis Channel**  
 - Redis Channels
   | Redis Channel | Trigger |

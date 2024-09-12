@@ -25,7 +25,7 @@ secret = "please_modify"
 
 # token默认过期时间，单位秒
 # Default token expiration time, in seconds
-expire = 3600
+expire = 30
 
 [redis]
 # 多个broker节点，必须保持一致;
