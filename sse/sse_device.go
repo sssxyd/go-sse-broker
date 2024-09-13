@@ -31,6 +31,9 @@ func getRedisDevice(deviceID string) *Device {
 	if err != nil {
 		return nil
 	}
+	if len(info) == 0 {
+		return nil
+	}
 	device := &Device{
 		DeviceID:        deviceID,
 		DeviceName:      info["device"],

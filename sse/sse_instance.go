@@ -37,6 +37,9 @@ func getRedisInstance(address string) *AbstractInstance {
 		log.Fatalf("Failed to get instance: %v\n", err)
 		return nil
 	}
+	if len(info) == 0 {
+		return nil
+	}
 	instacne := &AbstractInstance{
 		Version:   info["version"],
 		Address:   address,
