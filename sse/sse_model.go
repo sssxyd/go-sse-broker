@@ -59,7 +59,7 @@ func (f *Frame) String() string {
 
 type StateChange struct {
 	UID         string `json:"uid"`
-	DeviceID    string `json:"device_id"`
+	Device      string `json:"device"`
 	TriggerTime string `json:"trigger_time"`
 	Reason      string `json:"reason"`
 	Payload     string `json:"payload"`

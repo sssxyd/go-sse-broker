@@ -138,7 +138,7 @@ func HandleEvents(c *gin.Context) {
 			user.touch()
 		case <-c.Writer.CloseNotify():
 			log.Printf("Client %s on Device %s is offline\n", address, deviceName)
-			device.offline(DCR_DISCONNECT, "")
+			device.offline(DCR_DEVICE_DISCONNECT, "")
 			user.handleDeviceOffline(device)
 			deviceChannelWG.Done()
 			return

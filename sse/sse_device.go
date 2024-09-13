@@ -124,10 +124,10 @@ func (d *Device) touch() {
 func (d *Device) online() {
 	globalInstance.addDevice(d)
 	DispatchDeviceOnline(StateChange{
-		DeviceID:    d.DeviceID,
+		Device:      d.DeviceName,
 		UID:         d.UID,
 		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
-		Reason:      DCR_DEVICE_ONLINE,
+		Reason:      DCR_DEVICE_CONNECTED,
 		Payload:     globalInstance.Address,
 	})
 }
@@ -145,7 +145,7 @@ func (d *Device) offline(reason string, payload string) {
 	globalInstance.delDevice(d)
 
 	DispatchDeviceOffline(StateChange{
-		DeviceID:    d.DeviceID,
+		Device:      d.DeviceName,
 		UID:         d.UID,
 		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
 		Reason:      reason,

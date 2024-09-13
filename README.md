@@ -192,6 +192,7 @@ password = "please_modify"
   |------|------|----------|------|
   | uid  | string | false | multiple uids separated by commas |
   | device | string | false | multiple devices separated by commas |
+  | data | string | false | data part of system event: sys_kick_offline |
 - Request Example  
   - Get  
     `/kick?uid=1935,1936`
@@ -210,6 +211,16 @@ password = "please_modify"
     "micro": 225,
     "result": 6       
   }
+  ```
+    
+# System Event
+| Event Name | Data | Trigger |
+|---|---|---|
+|sys_connected | IP:Port of your client | Client connected |
+|sys_instance_close| IP:Port of the instance your client was connected to | SSE-broker instance stopped |
+|sys_extrude_offline| IP:Port of another client | Another client with the same device connected |
+|sys_kick_offline| Parameter data of API kick | API kick invoked |
+
 
 # Callback
 **Please Subscribe Redis Channel**  
@@ -225,7 +236,7 @@ password = "please_modify"
   ```go
   type StateChange struct {
 	UID         string `json:"uid"`
-	DeviceID    string `json:"device_id"`
+	Device      string `json:"device"`
 	TriggerTime string `json:"trigger_time"`
 	Reason      string `json:"reason"`
 	Payload     string `json:"payload"`
@@ -233,14 +244,13 @@ password = "please_modify"
   ```
 - Reasons (Go)
   ```go
-    const DCR_EXTRUDE_OFFLINE = "extrude_offline"
-    const DCR_KICK_OFFLINE = "kick_offline"
-    const DCR_INSTANCE_CLOSE = "instance_close"
-    const DCR_INSTANCE_CLEAR = "instance_clear"
-    const DCR_HEARTBEAT_FAIL = "heartbeat_fail"
-    const DCR_DISCONNECT = "disconnect"
-    const DCR_CONNECTED = "connected"
-    const DCR_DEVICE_ONLINE = "device_online"
+  const DCR_EXTRUDE_OFFLINE = "extrude_offline"
+  const DCR_KICK_OFFLINE = "kick_offline"
+  const DCR_INSTANCE_CLOSE = "instance_close"
+  const DCR_INSTANCE_CLEAR = "instance_clear"
+  const DCR_HEARTBEAT_FAIL = "heartbeat_fail"
+  const DCR_DEVICE_CONNECTED = "device_connected"
+  const DCR_DEVICE_DISCONNECT = "device_disconnect"
   ```
 
 

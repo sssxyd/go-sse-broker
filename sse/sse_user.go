@@ -103,11 +103,11 @@ func (u *User) handleDeviceOnline(device *Device) {
 	deviceIds = u.validateDeviceSet(deviceIds)
 	if len(deviceIds) == 0 {
 		// 第一个设备上线
-		u.online(device.DeviceID, DCR_CONNECTED, device.DeviceAddress)
+		u.online(device.DeviceID, device.DeviceName, DCR_DEVICE_CONNECTED, device.DeviceAddress)
 	}
 }
 
-func (u *User) online(deviceId string, reason string, payload string) {
+func (u *User) online(deviceId string, deviceName string, reason string, payload string) {
 	ctx := context.Background()
 	userDeviceSetKey := fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID)
 	globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
@@ -118,7 +118,7 @@ func (u *User) online(deviceId string, reason string, payload string) {
 	})
 	DispatchUserOnline(StateChange{
 		UID:         u.UID,
-		DeviceID:    deviceId,
+		Device:      deviceName,
 		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
 		Reason:      reason,
 		Payload:     payload,
@@ -147,11 +147,11 @@ func (u *User) handleDeviceOffline(device *Device) {
 	deviceIds = u.validateDeviceSet(deviceIds)
 	if len(deviceIds) == 0 {
 		// 最后一个设备下线
-		u.offline(device.DeviceID, DCR_DISCONNECT, device.DeviceAddress)
+		u.offline(device.DeviceName, DCR_DEVICE_DISCONNECT, device.DeviceAddress)
 	}
 }
 
-func (u *User) offline(deviceId string, reason string, payload string) {
+func (u *User) offline(deviceName string, reason string, payload string) {
 	ctx := context.Background()
 	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID))
@@ -163,7 +163,7 @@ func (u *User) offline(deviceId string, reason string, payload string) {
 	}
 	DispatchUserOffline(StateChange{
 		UID:         u.UID,
-		DeviceID:    deviceId,
+		Device:      deviceName,
 		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
 		Reason:      reason,
 		Payload:     payload,
