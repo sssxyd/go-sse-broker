@@ -16,7 +16,6 @@ func dispatchInstructionBatch(channel string, instructions []Instruction) {
 	if err != nil {
 		log.Printf("Failed to dispatch instruction batch: %v\n", err)
 	}
-
 }
 
 func DispatchInstruction(instanceAddress string, instruction Instruction) {
