@@ -1,7 +1,6 @@
 package sse
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"sse-broker/funcs"
@@ -11,9 +10,9 @@ import (
 )
 
 type InfoParams struct {
-	UID    string `json:"uid" form:"uid"`
-	Device string `json:"device" form:"device"`
-	IP     string `json:"ip" form:"ip"`
+	UID     string `json:"uid" form:"uid"`
+	Device  string `json:"device" form:"device"`
+	Address string `json:"address" form:"address"`
 }
 
 func (p *InfoParams) getTarget() (string, string) {
@@ -21,8 +20,8 @@ func (p *InfoParams) getTarget() (string, string) {
 		return "device", p.Device
 	} else if p.UID != "" {
 		return "user", p.UID
-	} else if p.IP != "" {
-		return "instance", p.IP
+	} else if p.Address != "" {
+		return "instance", p.Address
 	} else {
 		return "cluster", ""
 	}
@@ -100,26 +99,22 @@ func getUserInfo(uid string) UserInfo {
 	}
 }
 
-func getInstanceInfo(ip string) InstanceInfo {
-	online, err := globalRedis.SIsMember(KEY_CLUSTER_INSTANCE_SET, ip)
-	if err != nil {
-		log.Println("Failed to check instance online status:", err)
-		online = false
-	}
-	deviceCount := 0
-	if online {
-		cnt, err := globalRedis.SCard(fmt.Sprintf("%s%s", KEY_INSTANCE_DEVICE_SET_PREFIX, ip))
-		if err != nil {
-			log.Println("Failed to get device count:", err)
-			deviceCount = 0
-		} else {
-			deviceCount = int(cnt)
+func getInstanceInfo(address string) InstanceInfo {
+	instance := getRedisInstance(address)
+	if instance == nil {
+		return InstanceInfo{
+			Online: false,
+			AbstractInstance: AbstractInstance{
+				Version:     "",
+				Address:     address,
+				StartTime:   "",
+				DeviceCount: 0,
+			},
 		}
 	}
 	return InstanceInfo{
-		Online:      online,
-		Address:     ip,
-		DeviceCount: deviceCount,
+		Online:           instance.exist(),
+		AbstractInstance: *instance,
 	}
 }
 

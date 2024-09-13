@@ -26,7 +26,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.3"
+const version = "1.0.4"
 
 // 监测服务关闭信号
 func handleShutdown() {
@@ -104,6 +104,10 @@ func init() {
 	appLogFile = p
 
 	sse.Start(sse.Config{
+		Server: struct {
+			Version string
+			Port    int
+		}{Version: version, Port: config.Server.Port},
 		JWT: struct {
 			Secret string
 			Expire int

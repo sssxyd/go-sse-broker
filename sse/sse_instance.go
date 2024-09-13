@@ -5,16 +5,56 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-type ServiceInstance struct {
+type AbstractInstance struct {
+	Version     string `json:"version"`
 	Address     string `json:"address"`
 	StartTime   string `json:"start_time"`
 	DeviceCount int    `json:"device_count"`
+}
+
+func (s *AbstractInstance) String() string {
+	json, err := json.Marshal(s)
+	if err != nil {
+		json = []byte("{}")
+	}
+	return string(json)
+}
+
+func (s *AbstractInstance) exist() bool {
+	return s.Version != ""
+}
+
+func getRedisInstance(address string) *AbstractInstance {
+	info, err := globalRedis.HGetAll(fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, address))
+	if err != nil {
+		log.Fatalf("Failed to get instance: %v\n", err)
+		return nil
+	}
+	instacne := &AbstractInstance{
+		Version:   info["version"],
+		Address:   address,
+		StartTime: info["start_time"],
+		DeviceCount: func() int {
+			id, err := strconv.ParseInt(info["device_count"], 10, 64)
+			if err != nil {
+				log.Printf("Failed to parse last frame id: %v\n", err)
+				return 0
+			}
+			return int(id)
+		}(),
+	}
+	return instacne
+}
+
+type ServiceInstance struct {
+	AbstractInstance
 	Devices     sync.Map
 	TopicCancel context.CancelFunc
 }
@@ -35,27 +75,21 @@ func subscribeInstanceTopic(ctx context.Context, topic string) {
 	}
 }
 
-func NewServiceInstance(address string) *ServiceInstance {
+func NewServiceInstance(version string, address string) *ServiceInstance {
 	instacne := &ServiceInstance{
-		Address:     address,
-		StartTime:   time.Now().Format("2006-01-02 15:04:05"),
-		DeviceCount: 0,
-		Devices:     sync.Map{},
-	}
-	err := globalRedis.HSet(fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, address),
-		"address", instacne.Address,
-		"start_time", instacne.StartTime,
-		"device_count", 0)
-	if err != nil {
-		log.Fatalf("Failed to create instance: %v\n", err)
-		return nil
+		AbstractInstance: AbstractInstance{
+			Version:     version,
+			Address:     address,
+			StartTime:   time.Now().Format("2006-01-02 15:04:05"),
+			DeviceCount: 0,
+		},
+		Devices: sync.Map{},
 	}
 	return instacne
 }
 
 // 处理发给本实例的指令
 func (s *ServiceInstance) handleInstruction(instruction *Instruction) {
-	// log.Println("handleInstruction", instruction)
 	if channel, ok := deviceChannels.Load(instruction.DeviceID); ok {
 		inschannel, ok := channel.(chan *Instruction)
 		if !ok {
@@ -63,8 +97,6 @@ func (s *ServiceInstance) handleInstruction(instruction *Instruction) {
 		} else {
 			inschannel <- instruction
 		}
-	} else {
-		log.Printf("Device %s not found at %s\n", instruction.DeviceID, s.Address)
 	}
 }
 
@@ -101,8 +133,18 @@ func (s *ServiceInstance) start() bool {
 	// 启动前清理本实例上次关机导致的残留及异常
 	s.clear()
 
-	// 本实例添加到实例集合
-	_, err := globalRedis.SAdd(KEY_CLUSTER_INSTANCE_SET, s.Address)
+	// 本实例上线，并添加到实例集合
+	ctx := context.Background()
+	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.HSet(ctx, fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, s.Address),
+			"version", s.Version,
+			"address", s.Address,
+			"start_time", s.StartTime,
+			"device_count", 0)
+		pipe.SAdd(ctx, KEY_CLUSTER_INSTANCE_SET, s.Address)
+		return nil
+	})
+
 	if err != nil {
 		log.Fatalf("Failed to start instance: %v\n", err)
 		return false

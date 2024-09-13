@@ -147,7 +147,7 @@ password = "please_modify"
   |------|------|----------|------|
   | uid  | string | false | one user id |
   | device | string | false | one device |
-  | ip | string | false | instance ip address |  
+  | address | string | false | sse-broker instance address(ip:port) |  
 - Request Example  
   - Get: Custer Info  
     `/info`
@@ -174,7 +174,7 @@ password = "please_modify"
                 "device_name": "xuyd",
                 "uid": "sssxyd",
                 "login_time": "2024-09-12 09:57:59",
-                "instance_address": "192.168.2.22",
+                "instance_address": "192.168.2.22:8080",
                 "device_address": "192.168.2.22:64321",
                 "last_touch_time": "2024-09-12 10:13:59",
                 "last_frame_id": 12

@@ -228,6 +228,18 @@ func (r *RedisClient) HSet(key string, values ...interface{}) error {
 	return r.client.HSet(context.Background(), key, values).Err()
 }
 
+// HSetWithMap 设置指定哈希表中的字段和值。
+//
+// 参数：
+//   - key string：哈希表键。
+//   - values map[string]interface{}：字段和值的映射。
+//
+// 返回值：
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) HSetWithMap(key string, values map[string]interface{}) error {
+	return r.client.HMSet(context.Background(), key, values).Err()
+}
+
 // HGet 获取指定哈希表中指定字段的值。
 //
 // 参数：

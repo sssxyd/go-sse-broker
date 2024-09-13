@@ -24,7 +24,7 @@ func Start(config Config) {
 		fmt.Printf("Failed to create redis client: %v\n", err)
 		panic(fmt.Sprintf("Failed to create redis client: %v\n", err))
 	}
-	globalInstance = NewServiceInstance(localIP)
+	globalInstance = NewServiceInstance(config.Server.Version, fmt.Sprintf("%s:%d", localIP, config.Server.Port))
 	globalInstance.clear()
 	globalInstance.start()
 }
@@ -49,4 +49,12 @@ func GetIP() string {
 		return globalInstance.Address
 	}
 	return globalInstance.Address[:index]
+}
+
+func GetPort() int {
+	return globalConfig.Server.Port
+}
+
+func GetVersion() string {
+	return globalInstance.Version
 }

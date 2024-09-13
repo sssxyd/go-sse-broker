@@ -31,7 +31,6 @@ func getRedisDevice(deviceID string) *Device {
 	if err != nil {
 		return nil
 	}
-	log.Printf("Get device info: %v\n", info)
 	device := &Device{
 		DeviceID:        deviceID,
 		DeviceName:      info["device"],

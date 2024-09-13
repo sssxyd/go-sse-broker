@@ -389,7 +389,7 @@
             <li>Endpoint: <strong>/info</strong></li>
             <li>Method: <strong>GET/POST</strong></li>
             <li>Response Type: <strong>application/json</strong></li>
-            <li>Query Information of uid/device/instance/cluster， If none of the three parameters (uid/device/ip) are provided, the cluster's information will be returned.</li>
+            <li>Get Information of uid/device/instance/cluster， If none of the three parameters (uid/device/ip) are provided, the cluster's information will be returned.</li>
         </ul>
     </div>
 
@@ -446,11 +446,11 @@
             </tbody>
             <tbody>
                 <tr>
-                    <td>ip</td>
+                    <td>address</td>
                     <td>No</td>
                     <td>String</td>
                     <td></td>
-                    <td>instance ip</td>
+                    <td>sse-broker instance address(ip:port)</td>
                 </tr>
             </tbody>                        
         </table>
@@ -484,7 +484,7 @@
                 "device_name": "xuyd",
                 "uid": "sssxyd",
                 "login_time": "2024-09-12 09:57:59",
-                "instance_address": "192.168.2.22",
+                "instance_address": "192.168.2.22:8080",
                 "device_address": "192.168.2.22:64321",
                 "last_touch_time": "2024-09-12 10:13:59",
                 "last_frame_id": 0

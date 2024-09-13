@@ -6,6 +6,10 @@ import (
 )
 
 type Config struct {
+	Server struct {
+		Version string
+		Port    int
+	}
 	JWT struct {
 		Secret string
 		Expire int
@@ -99,9 +103,8 @@ func (d *DeviceInfo) String() string {
 }
 
 type InstanceInfo struct {
-	Online      bool   `json:"online"`
-	Address     string `json:"address"`
-	DeviceCount int    `json:"device_count"`
+	Online bool `json:"online"`
+	AbstractInstance
 }
 
 func (i *InstanceInfo) String() string {
