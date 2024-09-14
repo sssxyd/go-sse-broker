@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Demo</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #messages {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        input {
+            min-width: 400px;
+        }
+        textarea {
+            min-width: 400px;
+            min-height: 50px;
+        }
+    </style>
+    <script type="text/javascript">
+    // 请求通知权限
+    function requestNotificationPermission() {
+        if ("Notification" in window) {
+            // 检查是否已经获取权限
+            if (Notification.permission === "granted") {
+                // 权限已获取，直接继续
+                console.log("通知权限已授予");
+            } else if (Notification.permission !== "denied") {
+                // 如果用户尚未授予或拒绝权限，则请求权限
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        console.log("通知权限已授予");
+                    } else {
+                        console.log("用户拒绝通知权限");
+                    }
+                }).catch(error => {
+                    console.log("通知权限请求出错", error);
+                });
+            }
+        } else {
+            console.log("浏览器不支持通知");
+        }
+    }
+
+
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    function getDevice() {
+        // 获取设备标识，如果没有则生成一个
+        // device标识用于区分不同设备，同一个device同一时间只能有一个连接，后登陆的会将前一个挤下线
+        // sse的lastEventId机制是基于devcie而不是uid的
+        let device = localStorage.getItem('device');
+        if (!device) {
+            device = generateUUID();
+            localStorage.setItem('device', device);
+        }
+        return device;
+    }
+
+    function getToken(uid, device) {
+        // 获取一个绑定uid和device的3秒内有效的 sse token
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/token',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    uid: uid,
+                    device: device,
+                    ttl: 3  // 3秒有效期
+                }),
+                success: function(response) {
+                    if(response.code != 1) {
+                        reject('[' + response.code + "] " + response.msg);
+                    }
+                    else {
+                        resolve(response.result);
+                    }
+                },
+                error: function() {
+                    reject('get token failed');
+                }
+            });
+        });
+    }
+
+    // 向消息区域添加消息并滚动到底部
+    function appendMessage(type, title, data) {
+        const messageDiv = $('<div class="message"></div>');
+        messageDiv.html('<strong>' + title + ':</strong> ' + data);
+        $('#messages').append(messageDiv);
+
+        // 自动滚动到底部
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+    }
+
+    // 显示通知
+    function showNotification(message) {
+        if (Notification.permission === "granted") {
+            new Notification("Notice", {
+                body: message,
+                icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTQ1IDc5LjE2MzQ5OSwgMjAxOC8wOC8xMy0xNjo0MDoyMiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTkgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjgyMEZGMTIyOUY1NjExRUM5MTk5REE3NjhFODY1QUY5IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjgyMEZGMTIzOUY1NjExRUM5MTk5REE3NjhFODY1QUY5Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6ODIwRkYxMjA5RjU2MTFFQzkxOTlEQTc2OEU4NjVBRjkiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6ODIwRkYxMjE5RjU2MTFFQzkxOTlEQTc2OEU4NjVBRjkiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5+rU9bAAARUUlEQVR42uxd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' 
+            });
+        }
+        else {
+            appendMessage('event', 'Notice', message);
+            appendMessage('warning', 'Warning', '通知失败，请允许本站点的通知权限');
+        }
+    }
+
+
+    function startSSE() {
+        requestNotificationPermission();
+        const uid = $('#uid').val();
+        if (uid == '') {
+            alert('please input uid');
+            return;
+        }
+        const device = getDevice();
+        // 每次重连都重新获取token；
+        // 此处可改为向业务系统请求token，鉴权后由业务系统调用sse的token接口生成token
+        getToken(uid, device).then(token => {
+            return connectSSE(token, device);
+        }).catch(error => {
+            setTimeout(function() {
+                startSSE();  // 重连
+            }, 5000);  // 5 秒后重连
+        });
+    }
+
+    function connectSSE(token, device) {
+        return new Promise((resolve, reject) => {
+            const eventSource = new EventSource('/events?token=' + token + '&device=' + device);
+
+            eventSource.onopen = function() {
+                appendMessage('info', 'Info', '连接成功');
+                $('#yourId').text('你的ID: ' + $('#uid').val());
+                $('#user-form').hide();
+                $('#send-form').show();
+            };
+
+            eventSource.onmessage = function(event) {
+                appendMessage('message', 'Message', event.data);
+            };
+
+            eventSource.addEventListener('notice', function(event) {
+                showNotification(event.data);
+            });
+
+            eventSource.onerror = function(event) {
+                appendMessage('error', 'Error', '连接关闭');
+                eventSource.close();
+                if (eventSource.readyState === EventSource.CLOSED || eventSource.readyState === EventSource.CONNECTING) {
+                    appendMessage('info', 'Info', '尝试重新连接...');
+                    setTimeout(function() {
+                        startSSE();  // 重连
+                    }, 5000);  // 5 秒后重连
+                }                
+            };
+            resolve(eventSource);
+        });
+    }
+
+    // 发送消息，event为可选参数，如果不传表示发送message，否则发送指定event
+    // 此处可改为向业务系统调用，由业务系统鉴权及检查消息内容后调用sse的send接口发送消息
+    function send(event) {
+        uid = $('#targetUid').val();
+        if (uid == '') {
+            alert('please input target uid');
+            return;
+        }
+        data = $('#data').val();
+        if (data == '') {
+            alert('please input data');
+            return;
+        }
+        $.ajax({
+            url: '/send',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                uid: uid,
+                data: data,
+                event: event
+            }),
+            success: function(response) {
+                if(response.code != 1) {
+                    alert('send message failed: [' + response.code + "] " + response.msg);
+                    return;
+                }
+                else {
+                    type = event ? event : 'message';
+                    msg = 'send ' + type + ' to ' + uid + '\'s ' + response.result + ' device, data: ' +  $('#data').val();
+                    appendMessage('info', 'Send', msg);
+                    $('#data').val('');
+                }
+            },
+            error: function() {
+                alert('send message failed');
+            }
+        });
+    }
+    
+    </script>
+</head>
+<body>
+    <h1>SSE Demo</h1>
+    <div id="user-form">
+        <label for="uid">用户ID:</label>
+        <input type="text" id="uid" name="uid" minlength="1" required>
+        <button id="connect-sse" onclick="startSSE()">连接SSE</button>
+    </div>
+    <div id="send-form" style="display: none;">
+        <label id="yourId" style="margin-left: 15px;"></label><br/>
+        <div style="margin-bottom: 10px;"></div> 
+        <label for="targetUid">对方的ID:</label>
+        <input type="text" id="targetUid" name="targetUid" minlength="1" required>
+        <div style="margin-bottom: 10px;"></div> 
+        <label for="data">发送内容:</label>
+        <textarea id="data" name="data" minlength="1" required></textarea>
+        <div style="margin-bottom: 10px;"></div> 
+        <button id="send-message" onclick="send()">发送消息</button>
+        <button id="send-notification" onclick="send('notice')">发送通知</button>
+    </div>
+
+    <!-- 消息展示区域 -->
+    <div id="messages"></div>
+
+</body>
+</html>
