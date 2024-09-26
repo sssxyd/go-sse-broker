@@ -3,11 +3,43 @@ package sse
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+func getRealIP(c *gin.Context) string {
+	// 首先尝试从 X-Forwarded-For 获取 IP
+	xff := c.Request.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		// X-Forwarded-For 可能包含多个逗号分隔的 IP，取第一个
+		ips := strings.Split(xff, ",")
+		// 去除可能存在的空格并返回第一个非空 IP
+		for _, ip := range ips {
+			trimmedIP := strings.TrimSpace(ip)
+			if trimmedIP != "" {
+				return trimmedIP
+			}
+		}
+	}
+
+	// 如果 X-Forwarded-For 为空，尝试从 X-Real-IP 获取 IP
+	xRealIP := c.Request.Header.Get("X-Real-IP")
+	if xRealIP != "" {
+		return xRealIP
+	}
+
+	// 如果都没有，则返回 RemoteAddr，去掉端口号
+	remoteIP, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+	if err != nil {
+		// 如果解析失败，返回原始 RemoteAddr
+		return c.Request.RemoteAddr
+	}
+	return remoteIP
+}
 
 func HandleEvents(c *gin.Context) {
 	// 设置SSE响应头
@@ -19,7 +51,7 @@ func HandleEvents(c *gin.Context) {
 	deviceId := c.GetString("_device_id")
 	deviceName := c.GetString("_device_name")
 	lastEventId := c.GetInt64("_last_event_id")
-	address := c.Request.RemoteAddr
+	address := getRealIP(c)
 
 	// 将本设备登录的其他连接挤下线
 	existDevice := globalInstance.getDevice(deviceId)
