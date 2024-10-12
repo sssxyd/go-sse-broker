@@ -26,7 +26,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.4"
+const version = "1.0.5"
 
 // 监测服务关闭信号
 func handleShutdown() {
