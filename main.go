@@ -129,6 +129,12 @@ func init() {
 			DeviceFrameExpireDuration: time.Duration(config.SSE.DeviceFrameExpire) * time.Second,
 			DeviceFrameCacheSize:      config.SSE.DeviceFrameCacheSize,
 		},
+		Callback: map[string]string{
+			sse.TOPIC_USER_ONLINE:    config.Callback.UserOnline,
+			sse.TOPIC_USER_OFFLINE:   config.Callback.UserOffline,
+			sse.TOPIC_DEVICE_ONLINE:  config.Callback.DeviceOnline,
+			sse.TOPIC_DEVICE_OFFLINE: config.Callback.DeviceOffline,
+		},
 	})
 }
 

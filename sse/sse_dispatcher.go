@@ -4,7 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"strings"
+	"time"
 )
+
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second, // 设置请求超时时间
+}
 
 func dispatchInstructionBatch(channel string, instructions []Instruction) {
 	ctx := context.Background()
@@ -41,17 +48,52 @@ func DispatchInstructions(instanceAddress string, instructions []Instruction) {
 }
 
 func DispatchDeviceOnline(change StateChange) {
-	globalRedis.Publish(TOPIC_DEVICE_ONLINE, change.String())
+	payload := change.String()
+	globalRedis.Publish(TOPIC_DEVICE_ONLINE, payload)
+	on_state_change(TOPIC_DEVICE_ONLINE, payload)
 }
 
 func DispatchDeviceOffline(change StateChange) {
-	globalRedis.Publish(TOPIC_DEVICE_OFFLINE, change.String())
+	payload := change.String()
+	globalRedis.Publish(TOPIC_DEVICE_OFFLINE, payload)
+	on_state_change(TOPIC_DEVICE_OFFLINE, payload)
 }
 
 func DispatchUserOnline(change StateChange) {
-	globalRedis.Publish(TOPIC_USER_ONLINE, change.String())
+	payload := change.String()
+	globalRedis.Publish(TOPIC_USER_ONLINE, payload)
+	on_state_change(TOPIC_USER_ONLINE, payload)
 }
 
 func DispatchUserOffline(change StateChange) {
-	globalRedis.Publish(TOPIC_USER_OFFLINE, change.String())
+	payload := change.String()
+	globalRedis.Publish(TOPIC_USER_OFFLINE, payload)
+	on_state_change(TOPIC_USER_OFFLINE, payload)
+}
+
+func on_state_change(sse_topic string, payload string) {
+	url, exist := globalConfig.Callback[sse_topic]
+	if !exist || url == "" || url == "null" {
+		return
+	}
+	url = strings.TrimSpace(url)
+	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {
+		go post_json_with_retry(url, payload, 3)
+	}
+}
+
+func post_json_with_retry(url string, payload string, retry int) {
+	delaySeconds := 10
+	for i := 0; i < retry; i++ {
+		resp, err := httpClient.Post(url, "application/json", strings.NewReader(payload))
+		if err == nil {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			break
+		}
+		log.Printf("Failed to dispatch http event: %v\n", err)
+		time.Sleep(time.Duration(delaySeconds) * time.Second)
+		delaySeconds *= 6
+	}
 }

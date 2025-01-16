@@ -26,6 +26,7 @@ type Config struct {
 		DeviceFrameExpireDuration time.Duration
 		DeviceFrameCacheSize      int
 	}
+	Callback map[string]string
 }
 
 type Instruction struct {

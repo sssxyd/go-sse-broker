@@ -21,11 +21,11 @@ broker_log_path = "logs/broker.log"
 
 # 生成token的密钥
 # Secret key for generating JWT tokens
-secret = "please_modify"
+secret = "JWT_queoreibesh8waS6"
 
 # token默认过期时间，单位秒
 # Default token expiration time, in seconds
-expire = 30
+expire = 3600
 
 [redis]
 # 多个broker节点，必须保持一致;
@@ -33,15 +33,15 @@ expire = 30
 
 # redis地址, 单地址为单例模式， 多地址为集群模式；单例模式下，db必须设置; 
 # Redis addresses, a single address for standalone mode, multiple addresses for cluster mode; in standalone mode, 'db' must be set; 
-addrs = ["please_modify_1:6379", "please_modify_2:6379"]
+addrs = ["114.116.222.136:6379"]
 
 # redis密码; 
 # Redis password; 
-password = "please_modify"
+password = "Yfw68Test2019"
 
 # redis数据库;
 # Redis database (used in standalone mode); 
-db = 0
+db = 5
 
 # redis连接池大小，0表示默认值 cpu核数*10
 # Size of the Redis connection pool, 0 indicates the default value (10 * number of CPU cores)
@@ -62,3 +62,14 @@ device_frame_cache_size = 10
 # 每个设备，缓存的消息帧过期时间
 # Expiration time for cached message frames per device, in seconds
 device_frame_cache_expire = 604800
+
+[callback]
+# 多个broker节点，必须保持一致;
+# In a multi-broker environment, the configuration must be consistent
+# 默认向指定的redis频道发送消息，可以自定义回调地址，系统向该地址Post一个json数据
+# By default, messages are sent to the specified Redis channel. 
+# You can customize the callback address, and the system will post a JSON data to that address
+user_online = "http://127.0.0.1:8080/callback/user_online"
+user_offline = "http://127.0.0.1:8080/callback/user_offline"
+device_online = "http://127.0.0.1:8080/callback/device_online"
+device_offline = "http://127.0.1.1:8080/callback/device_offline"

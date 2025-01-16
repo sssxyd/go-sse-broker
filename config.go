@@ -34,6 +34,12 @@ type Config struct {
 		DeviceFrameCacheSize int `toml:"device_frame_cache_size"`
 		DeviceFrameExpire    int `toml:"device_frame_cache_expire"`
 	} `toml:"sse"`
+	Callback struct {
+		UserOnline    string `toml:"user_online"`
+		UserOffline   string `toml:"user_offline"`
+		DeviceOnline  string `toml:"device_online"`
+		DeviceOffline string `toml:"device_offline"`
+	} `toml:"callback"`
 }
 
 func loadConfig(baseDir string, configPath string) (*Config, error) {
