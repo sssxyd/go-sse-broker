@@ -84,7 +84,7 @@ func on_state_change(sse_topic string, payload string) {
 
 func post_json_with_retry(url string, payload string, retry int) {
 	delaySeconds := 10
-	for i := 0; i < retry; i++ {
+	for range retry {
 		resp, err := httpClient.Post(url, "application/json", strings.NewReader(payload))
 		if err == nil {
 			if resp != nil {

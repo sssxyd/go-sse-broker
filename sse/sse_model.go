@@ -58,12 +58,22 @@ func (f *Frame) String() string {
 	return string(json)
 }
 
+type StateEvent string
+
+const (
+	DeviceOnline  StateEvent = "device_online"
+	DeviceOffline StateEvent = "device_offline"
+	UserOnline    StateEvent = "user_online"
+	UserOffline   StateEvent = "user_offline"
+)
+
 type StateChange struct {
-	UID         string `json:"uid"`
-	Device      string `json:"device"`
-	TriggerTime string `json:"trigger_time"`
-	Reason      string `json:"reason"`
-	Payload     string `json:"payload"`
+	Event       StateEvent `json:"event"`
+	UID         string     `json:"uid"`
+	Device      string     `json:"device"`
+	EventTimeMs int64      `json:"event_time_ms"`
+	Reason      string     `json:"reason"`
+	Payload     string     `json:"payload"`
 }
 
 func (s *StateChange) String() string {

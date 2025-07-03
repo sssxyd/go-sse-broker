@@ -117,9 +117,10 @@ func (u *User) online(deviceId string, deviceName string, reason string, payload
 		return nil
 	})
 	DispatchUserOnline(StateChange{
+		Event:       UserOnline,
 		UID:         u.UID,
 		Device:      deviceName,
-		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
+		EventTimeMs: time.Now().UnixMilli(),
 		Reason:      reason,
 		Payload:     payload,
 	})
@@ -162,9 +163,10 @@ func (u *User) offline(deviceName string, reason string, payload string) {
 		log.Printf("Failed to offline user: %v\n", err)
 	}
 	DispatchUserOffline(StateChange{
+		Event:       UserOffline,
 		UID:         u.UID,
 		Device:      deviceName,
-		TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
+		EventTimeMs: time.Now().UnixMilli(),
 		Reason:      reason,
 		Payload:     payload,
 	})
