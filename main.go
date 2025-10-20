@@ -36,7 +36,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.6"
+const version = "1.0.7"
 
 func is_windows() bool {
 	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows")
@@ -58,9 +58,9 @@ func create_logger(config *Config) {
 		level = slog.LevelInfo
 	}
 
-	accessLog = funcs.InitializeLumberjackLogger(config.AccessLog.Path, config.AccessLog.MaxMegaBytes, config.AccessLog.MaxAgeDay, config.AccessLog.MaxBackups, config.AccessLog.Compress)
-	errorLog = funcs.InitializeLumberjackLogger(config.ErrorLog.Path, config.ErrorLog.MaxMegaBytes, config.ErrorLog.MaxAgeDay, config.ErrorLog.MaxBackups, config.ErrorLog.Compress)
-	brokerLogger := funcs.InitializeLumberjackLogger(config.BrokerLog.Path, config.BrokerLog.MaxMegaBytes, config.BrokerLog.MaxAgeDay, config.BrokerLog.MaxBackups, config.BrokerLog.Compress)
+	accessLog = funcs.InitializeLumberjackLogger(config.AccessLog.Path, config.AccessLog.MaxMegaBytes, config.AccessLog.MaxAgeDays, config.AccessLog.MaxBackups, config.AccessLog.Compress)
+	errorLog = funcs.InitializeLumberjackLogger(config.ErrorLog.Path, config.ErrorLog.MaxMegaBytes, config.ErrorLog.MaxAgeDays, config.ErrorLog.MaxBackups, config.ErrorLog.Compress)
+	brokerLogger := funcs.InitializeLumberjackLogger(config.BrokerLog.Path, config.BrokerLog.MaxMegaBytes, config.BrokerLog.MaxAgeDays, config.BrokerLog.MaxBackups, config.BrokerLog.Compress)
 
 	var writer io.Writer
 	if is_windows() {

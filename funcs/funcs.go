@@ -190,7 +190,7 @@ func GetAppRootPath() string {
 	}
 }
 
-func InitializeLumberjackLogger(logFilePath string, maxMegaBytes int, maxAgeDay int, maxBackups int, compress bool) *lumberjack.Logger {
+func InitializeLumberjackLogger(logFilePath string, maxMegaBytes int, maxAgeDays int, maxBackups int, compress bool) *lumberjack.Logger {
 	// 检查日志目录是否存在
 	logDir := filepath.Dir(logFilePath)
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
@@ -205,8 +205,8 @@ func InitializeLumberjackLogger(logFilePath string, maxMegaBytes int, maxAgeDay 
 	if maxMegaBytes <= 0 {
 		maxMegaBytes = 100
 	}
-	if maxAgeDay < 0 {
-		maxAgeDay = 0
+	if maxAgeDays < 0 {
+		maxAgeDays = 0
 	}
 
 	// 配置 lumberjack 日志文件管理
@@ -214,7 +214,7 @@ func InitializeLumberjackLogger(logFilePath string, maxMegaBytes int, maxAgeDay 
 		Filename:   logFilePath,
 		MaxSize:    maxMegaBytes, // 每个日志文件最大大小（单位：MB）
 		MaxBackups: maxBackups,   // 保留的旧日志文件个数
-		MaxAge:     maxAgeDay,    // 日志文件保留天数
+		MaxAge:     maxAgeDays,   // 日志文件保留天数
 		Compress:   compress,     // 自动压缩旧日志文件
 		LocalTime:  true,         // 使用本地时间
 	}

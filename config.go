@@ -10,30 +10,32 @@ import (
 
 type Config struct {
 	Server struct {
-		Port int `toml:"port"`
+		IPV4 string `toml:"ipv4"`
+		IPV6 string `toml:"ipv6"`
+		Port int    `toml:"port"`
 	} `toml:"server"`
 	AccessLog struct {
 		Path         string `toml:"path"`
 		MaxMegaBytes int    `toml:"max_mega_bytes"`
-		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxAgeDays   int    `toml:"max_age_days"`
 		MaxBackups   int    `toml:"max_backups"`
 		Compress     bool   `toml:"compress"`
-	}
+	} `toml:"access_log"`
 	ErrorLog struct {
 		Path         string `toml:"path"`
 		MaxMegaBytes int    `toml:"max_mega_bytes"`
-		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxAgeDays   int    `toml:"max_age_days"`
 		MaxBackups   int    `toml:"max_backups"`
 		Compress     bool   `toml:"compress"`
-	}
+	} `toml:"error_log"`
 	BrokerLog struct {
 		Level        string `toml:"level"`
 		Path         string `toml:"path"`
 		MaxMegaBytes int    `toml:"max_mega_bytes"`
-		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxAgeDays   int    `toml:"max_age_days"`
 		MaxBackups   int    `toml:"max_backups"`
 		Compress     bool   `toml:"compress"`
-	}
+	} `toml:"broker_log"`
 	JWT struct {
 		Secret string `toml:"secret"`
 		Expire int    `toml:"expire"`

@@ -1,23 +1,83 @@
 [server]
+# 监听地址，多个地址用逗号分隔，默认监听所有地址
+# Listening addresses, multiple addresses separated by commas, default listens on all addresses
+ipv4 = "0.0.0.0"
+
+# 监听的IPV6地址，多个地址用逗号分隔，例如："[fe80::abcd:1234],[2001:db8::1] 默认不监听
+# Listening IPv6 addresses, multiple addresses separated by commas, e.g.: "[fe80::abcd:1234],[2001:db8::1] Default does not listen
+ipv6 = ""
+
 # 服务启动端口
 # Port for the server to start on
 port = 8080
 
+
+[access_log]
 # 请求access日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for access log, relative to the startup directory or an absolute path
-access_log_path = "logs/access.log"
+path = "logs/access.log"
 
+# 单个日志文件的最大大小，单位MB
+# Maximum size of a single log file, in MB
+max_mega_bytes = 100
+
+# 保留的旧日志文件个数
+# Number of old log files to retain
+max_backups = 7
+
+# 日志文件保留天数
+# Number of days to retain log files
+max_age_days = 30
+
+# 是否压缩旧的日志文件
+# Whether to compress old log files
+compress = true
+
+[error_log]
 # 请求error日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for error log, relative to the startup directory or an absolute path
-error_log_path = "logs/error.log"
+path = "logs/error.log"
 
+# 单个日志文件的最大大小，单位MB
+# Maximum size of a single log file, in MB
+max_mega_bytes = 100
+
+# 保留的旧日志文件个数
+# Number of old log files to retain
+max_backups = 7
+
+# 日志文件保留天数
+# Number of days to retain log files
+max_age_days = 30
+
+# 是否压缩旧的日志文件
+# Whether to compress old log files
+compress = true
+
+[broker_log]
 # 业务日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for application log, relative to the startup directory or an absolute path
-broker_log_path = "logs/broker.log"
+path = "logs/broker.log"
 
 # 业务日志级别， 可选值： debug, info, warn, error
 # Log level for the broker, options: debug, info, warn, error
-broker_log_level = "info"
+level = "info"
+
+# 单个日志文件的最大大小，单位MB
+# Maximum size of a single log file, in MB
+max_mega_bytes = 100
+
+# 保留的旧日志文件个数
+# Number of old log files to retain
+max_backups = 7
+
+# 日志文件保留天数
+# Number of days to retain log files
+max_age_days = 30
+
+# 是否压缩旧的日志文件
+# Whether to compress old log files
+compress = true
 
 [jwt]
 # 多个broker节点，必须保持一致;
@@ -25,7 +85,7 @@ broker_log_level = "info"
 
 # 生成token的密钥
 # Secret key for generating JWT tokens
-secret = "JWT_queoreibesh8waS6"
+secret = "Your_JWT_Secret"
 
 # token默认过期时间，单位秒
 # Default token expiration time, in seconds
@@ -37,11 +97,11 @@ expire = 3600
 
 # redis地址, 单地址为单例模式， 多地址为集群模式；单例模式下，db必须设置; 
 # Redis addresses, a single address for standalone mode, multiple addresses for cluster mode; in standalone mode, 'db' must be set; 
-addrs = ["114.116.222.136:6379"]
+addrs = ["127.0.0.1:6379"]
 
 # redis密码; 
 # Redis password; 
-password = "Yfw68Test2019"
+password = "Your_Redis_Password"
 
 # redis数据库;
 # Redis database (used in standalone mode); 
