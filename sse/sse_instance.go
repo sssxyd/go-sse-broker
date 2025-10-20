@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -34,7 +34,7 @@ func (s *AbstractInstance) exist() bool {
 func getRedisInstance(address string) *AbstractInstance {
 	info, err := globalRedis.HGetAll(fmt.Sprintf("%s%s", KEY_INSTANCE_PREFIX, address))
 	if err != nil {
-		log.Fatalf("Failed to get instance: %v\n", err)
+		slog.Error("Failed to get instance", "error", err)
 		return nil
 	}
 	if len(info) == 0 {
@@ -47,7 +47,7 @@ func getRedisInstance(address string) *AbstractInstance {
 		DeviceCount: func() int {
 			id, err := strconv.ParseInt(info["device_count"], 10, 64)
 			if err != nil {
-				log.Printf("Failed to parse last frame id: %v\n", err)
+				slog.Error("Failed to parse last frame id", "error", err)
 				return 0
 			}
 			return int(id)
@@ -67,13 +67,13 @@ func subscribeInstanceTopic(ctx context.Context, topic string) {
 		var instruction Instruction
 		err := json.Unmarshal([]byte(payload), &instruction)
 		if err != nil {
-			log.Printf("Failed to unmarshal instruction: %v\n", err)
+			slog.Error("Failed to unmarshal instruction", "error", err)
 			return
 		}
 		globalInstance.handleInstruction(&instruction)
 	}, topic)
 	if err != nil {
-		log.Fatalf("Failed to subscribe instance topic: %v\n", err)
+		slog.Error("Failed to subscribe instance topic", "error", err)
 		panic(fmt.Sprintf("Failed to subscribe instance topic: %v\n", err))
 	}
 }
@@ -96,7 +96,7 @@ func (s *ServiceInstance) handleInstruction(instruction *Instruction) {
 	if channel, ok := deviceChannels.Load(instruction.DeviceID); ok {
 		inschannel, ok := channel.(chan *Instruction)
 		if !ok {
-			log.Printf("Device %s not found at %s\n", instruction.DeviceID, s.Address)
+			slog.Warn("Device not found", "device", instruction.DeviceID, "address", s.Address)
 		} else {
 			inschannel <- instruction
 		}
@@ -118,7 +118,7 @@ func (s *ServiceInstance) clear() {
 		return nil
 	})
 	if err != nil {
-		log.Fatalf("Failed to clear instance: %v\n", err)
+		slog.Error("Failed to clear instance", "error", err)
 		return
 	}
 	deviceIDs, _ := cmds[0].(*redis.StringSliceCmd).Result()
@@ -149,7 +149,7 @@ func (s *ServiceInstance) start() bool {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to start instance: %v\n", err)
+		slog.Error("Failed to start instance", "error", err)
 		return false
 	}
 
@@ -182,7 +182,7 @@ func (s *ServiceInstance) stop() {
 	})
 	// 等待所有设备连接关闭
 	deviceChannelWG.Wait()
-	log.Printf("Instance %s stopped\n", s.Address)
+	slog.Info("Instance stopped", "address", s.Address)
 }
 
 func (s *ServiceInstance) dispose() {
@@ -194,7 +194,7 @@ func (s *ServiceInstance) dispose() {
 		return nil
 	})
 	if err != nil {
-		log.Fatalf("Failed to dispose instance: %v\n", err)
+		slog.Error("Failed to dispose instance", "error", err)
 	}
 }
 
@@ -221,7 +221,7 @@ func (s *ServiceInstance) addDevice(device *Device) {
 		return nil
 	})
 	if err != nil {
-		log.Fatalf("Failed to add device: %v\n", err)
+		slog.Error("Failed to add device", "error", err)
 	}
 }
 
@@ -234,6 +234,6 @@ func (s *ServiceInstance) delDevice(device *Device) {
 		return nil
 	})
 	if err != nil {
-		log.Fatalf("Failed to remove device: %v\n", err)
+		slog.Error("Failed to remove device", "error", err)
 	}
 }

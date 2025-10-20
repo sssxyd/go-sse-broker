@@ -2,11 +2,11 @@ package sse
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -17,12 +17,12 @@ type TokenParams struct {
 }
 
 // CreateToken 生成JWT
-func HandleToken(c *gin.Context) {
+func HandleToken(c *fiber.Ctx) error {
 	startRequest(c)
 	var params TokenParams
 	if err := fillParams(c, &params); err != nil {
-		log.Fatalln(err)
-		return
+		slog.Error("Failed to fill params", "error", err)
+		return nil
 	}
 	if params.TTL <= 0 {
 		params.TTL = jwtExpire
@@ -40,16 +40,15 @@ func HandleToken(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"code":   http.StatusInternalServerError,
 			"msg":    fmt.Sprintf("Failed to sign token: %s", err.Error()),
 			"result": "",
 			"micro":  endRequest(c),
 		})
-		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"code":   1,
 		"msg":    "success",
 		"result": tokenString,

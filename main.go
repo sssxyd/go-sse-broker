@@ -4,23 +4,33 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"log"
+	"io"
+	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"sse-broker/funcs"
 	"sse-broker/sse"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"runtime/debug"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
-	config        *Config
-	accessLogFile *os.File
-	errorLogFile  *os.File
-	appLogFile    *os.File
+	config       *Config
+	accessLog    *lumberjack.Logger
+	accessLogger io.Writer
+	errorLog     *lumberjack.Logger
+	errorLogger  io.Writer
 )
 
 //go:embed static/**
@@ -28,34 +38,51 @@ var staticFiles embed.FS
 
 const version = "1.0.6"
 
-// 监测服务关闭信号
-func handleShutdown() {
-	// 创建一个 channel 来接收操作系统信号
-	signalChan := make(chan os.Signal, 1)
+func is_windows() bool {
+	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows")
+}
 
-	// 捕获 SIGINT (Ctrl+C) 和 SIGTERM (systemctl stop) 信号
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	// 等待信号
-	sig := <-signalChan
-	log.Printf("Received signal: %s. Shutting down...", sig)
-
-	sse.Stop()
-
-	sse.Dispose()
-
-	// 关闭日志文件
-	if accessLogFile != nil {
-		accessLogFile.Close()
-	}
-	if errorLogFile != nil {
-		errorLogFile.Close()
-	}
-	if appLogFile != nil {
-		appLogFile.Close()
+func create_logger(config *Config) {
+	// 解析日志级别
+	var level slog.Level
+	switch config.BrokerLog.Level {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
 	}
 
-	os.Exit(0)
+	accessLog = funcs.InitializeLumberjackLogger(config.AccessLog.Path, config.AccessLog.MaxMegaBytes, config.AccessLog.MaxAgeDay, config.AccessLog.MaxBackups, config.AccessLog.Compress)
+	errorLog = funcs.InitializeLumberjackLogger(config.ErrorLog.Path, config.ErrorLog.MaxMegaBytes, config.ErrorLog.MaxAgeDay, config.ErrorLog.MaxBackups, config.ErrorLog.Compress)
+	brokerLogger := funcs.InitializeLumberjackLogger(config.BrokerLog.Path, config.BrokerLog.MaxMegaBytes, config.BrokerLog.MaxAgeDay, config.BrokerLog.MaxBackups, config.BrokerLog.Compress)
+
+	var writer io.Writer
+	if is_windows() {
+		// windows环境下，同时输出到控制台和文件
+		accessLogger = io.MultiWriter(os.Stdout, accessLog)
+		errorLogger = io.MultiWriter(os.Stderr, errorLog)
+		writer = io.MultiWriter(os.Stdout, brokerLogger)
+
+	} else {
+		accessLogger = accessLog
+		errorLogger = errorLog
+		writer = io.MultiWriter(brokerLogger)
+	}
+	// 创建文本格式的 handler，包含源码位置信息
+	opts := &slog.HandlerOptions{
+		Level:     level,
+		AddSource: true,
+	}
+	// 使用 JSON 格式（时间格式更标准）
+	handler := slog.NewJSONHandler(writer, opts)
+	// 设置为默认 logger
+	slog.SetDefault(slog.New(handler))
 }
 
 func init() {
@@ -85,23 +112,21 @@ func init() {
 		configPath = shortConfig
 	}
 	if configPath == "" {
-		if os.Getenv("OS") == "Windows_NT" {
+		if is_windows() {
 			configPath = "config.toml"
 		} else {
 			configPath = "/etc/sse-broker/config.toml"
 		}
 	}
-	baseDir := funcs.GetExecutionPath()
+	baseDir := funcs.GetAppRootPath()
 	cfg, err := loadConfig(baseDir, configPath)
 	if err != nil {
 		fmt.Printf("Failed to load config: %v\n", err)
 		panic(fmt.Sprintf("Failed to load config: %v\n", err))
 	}
 	config = cfg
-	a, e, p := initLogger(baseDir, config)
-	accessLogFile = a
-	errorLogFile = e
-	appLogFile = p
+
+	create_logger(config)
 
 	sse.Start(sse.Config{
 		Server: struct {
@@ -139,48 +164,114 @@ func init() {
 }
 
 func main() {
-	// 设置 Gin 运行模式为 release
-	gin.SetMode(gin.ReleaseMode)
-
-	go handleShutdown()
-
-	// 创建Gin引擎
-	engine := gin.Default()
-
-	// 设置静态文件路由
-	engine.GET("/static/*filepath", func(ctx *gin.Context) {
-		staticServer := http.FileServer(http.FS(staticFiles))
-		staticServer.ServeHTTP(ctx.Writer, ctx.Request)
+	// 创建 Fiber 应用，并定制错误处理（写入 error.log）
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if fe, ok := err.(*fiber.Error); ok {
+				code = fe.Code
+			}
+			// 时间 | 级别 | 状态码 | 方法 路径 | IP | 错误
+			fmt.Fprintf(errorLogger, "%s | ERROR %d | %s %s | ip=%s | %s\n",
+				time.Now().Format("2006-01-02 15:04:05"),
+				code, c.Method(), c.OriginalURL(), c.IP(), err.Error(),
+			)
+			return c.Status(code).JSON(fiber.Map{
+				"code":   code,
+				"msg":    err.Error(),
+				"result": "",
+				"micro":  0,
+			})
+		},
 	})
-	engine.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusMovedPermanently, "/static/index.html")
+
+	// Panic 恢复并写栈到 error.log
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+			if errorLogger != nil {
+				fmt.Fprintf(errorLogger, "%s | PANIC | %s %s | ip=%s | %v\n%s\n",
+					time.Now().Format("2006-01-02 15:04:05"),
+					c.Method(), c.OriginalURL(), c.IP(), e, string(debug.Stack()),
+				)
+			}
+		},
+	}))
+
+	// 访问日志写入 access.log
+	app.Use(logger.New(logger.Config{
+		Output:     accessLogger,
+		TimeFormat: "2006-01-02 15:04:05",
+		TimeZone:   "Local",
+		// ${latency} 为处理耗时，${bytesSent} 等可按需添加
+		Format: "${time} | ${ip} | ${status} | ${latency} | ${method} ${path}\n",
+	}))
+
+	// 静态文件（使用 embed FS）
+	// 将 embed FS 子目录 "static" 作为根目录挂载到 /static
+	sub, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		slog.Error("failed to sub fs", "error", err.Error())
+	}
+	app.Use("/static", filesystem.New(filesystem.Config{
+		Root:   http.FS(sub),
+		Browse: false,
+		Index:  "index.html",
+	}))
+
+	// 根路径重定向
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Redirect("/static/index.html", http.StatusMovedPermanently)
 	})
-	engine.GET("/favicon.ico", func(ctx *gin.Context) {
+
+	// favicon（保持与原有路径兼容）
+	app.Get("/favicon.ico", func(c *fiber.Ctx) error {
 		favicon, err := staticFiles.ReadFile("static/favicon.ico")
 		if err != nil {
-			ctx.String(http.StatusNotFound, "Favicon not found")
-			return
+			return c.Status(http.StatusNotFound).SendString("Favicon not found")
 		}
-		ctx.Data(http.StatusOK, "image/x-icon", favicon)
+		c.Set("Content-Type", "image/x-icon")
+		return c.Send(favicon)
 	})
 
-	// 设置API路由
-	engine.GET("/events", sse.TokenCheck(), sse.HandleEvents)
-	engine.Any("/token", sse.HandleToken)
-	engine.Any("/send", sse.HandleSend)
-	engine.Any("/info", sse.HandleInfo)
-	engine.Any("/kick", sse.HandleKick)
+	// API 路由
+	app.Get("/events", sse.TokenCheck(), sse.HandleEvents)
+	app.All("/token", sse.HandleToken)
+	app.All("/send", sse.HandleSend)
+	app.All("/info", sse.HandleInfo)
+	app.All("/kick", sse.HandleKick)
 
 	instanceIP := sse.GetIP()
 	instancePort := config.Server.Port
-	log.Println("-----------------------------------------------")
-	log.Printf("SSE-Broker Started, Listening Port: %d\n", instancePort)
-	log.Printf("Instance IP: %s, Instance Version: %s\n", instanceIP, version)
-	log.Printf("API  Page: http://%s:%d/\n", instanceIP, instancePort)
-	log.Printf("Demo Page: http://%s:%d/static/demo.html\n", instanceIP, instancePort)
-	log.Println("-----------------------------------------------")
+	slog.Info("SSE-Broker Started", "port", instancePort)
+	slog.Info("Instance IP", "ip", instanceIP, "version", version)
+	slog.Info("API  Page", "url", fmt.Sprintf("http://%s:%d/", instanceIP, instancePort))
+	slog.Info("Demo Page", "url", fmt.Sprintf("http://%s:%d/static/demo.html", instanceIP, instancePort))
 
-	// 启动服务
-	engine.Run(fmt.Sprintf(":%d", instancePort))
+	// 优雅关闭：监听信号，触发 Fiber 关闭
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-quit
+		slog.Info("Received signal", "signal", sig.String(), "message", "shutting down")
+		// 先停止内部调度
+		sse.Stop()
+		if err := app.Shutdown(); err != nil {
+			slog.Error("Fiber shutdown error", "error", err.Error())
+		}
+	}()
 
+	// 启动服务（阻塞直到关闭）
+	if err := app.Listen(fmt.Sprintf(":%d", instancePort)); err != nil {
+		slog.Error("Server stopped", "error", err.Error())
+	}
+
+	// 释放资源
+	sse.Dispose()
+	if accessLog != nil {
+		accessLog.Close()
+	}
+	if errorLog != nil {
+		errorLog.Close()
+	}
 }

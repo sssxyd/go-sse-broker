@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -45,13 +45,13 @@ func getRedisDevice(deviceID string) *Device {
 		LastFrameId: func() int64 {
 			id, err := strconv.ParseInt(info["last_frame_id"], 10, 64)
 			if err != nil {
-				log.Printf("Failed to parse last frame id: %v\n", err)
+				slog.Error("Failed to parse last frame id", "error", err)
 				return 0
 			}
 			return id
 		}(),
 	}
-	log.Printf("Get redis device: %v\n", device)
+	slog.Info("Get redis device", "device", device)
 	return device
 }
 
@@ -87,7 +87,7 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to create device: %v\n", err)
+		slog.Error("Failed to create device", "error", err)
 		return nil
 	}
 	return device
@@ -116,7 +116,7 @@ func (d *Device) touch() {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to touch device: %v\n", err)
+		slog.Error("Failed to touch device", "error", err)
 	}
 }
 
@@ -138,7 +138,7 @@ func (d *Device) offline(reason string, payload string) {
 	if channel, ok := deviceChannels.LoadAndDelete(d.DeviceID); ok {
 		inschan, ok := channel.(chan Instruction)
 		if ok {
-			log.Printf("Close channel for device %s\n", d.DeviceID)
+			slog.Info("Close channel for device", "device", d.DeviceID)
 			close(inschan)
 		}
 	}
@@ -180,7 +180,7 @@ func (d *Device) getCachedFrames(lastEventID int64) []Frame {
 func (d *Device) addFrame(event string, data string) Frame {
 	frameId, err := globalRedis.HIncrBy(fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, d.DeviceID), "last_frame_id", 1)
 	if err != nil {
-		log.Printf("Failed to get next frame id: %v\n", err)
+		slog.Error("Failed to get next frame id", "error", err)
 		return Frame{
 			ID:    d.LastFrameId + 1,
 			Event: event,
@@ -204,7 +204,7 @@ func (d *Device) addFrame(event string, data string) Frame {
 			return nil
 		})
 		if err != nil {
-			log.Printf("Failed to cache frame: %v\n", err)
+			slog.Error("Failed to cache frame", "error", err)
 		}
 	}
 	return frame

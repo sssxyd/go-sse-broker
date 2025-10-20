@@ -15,6 +15,10 @@ error_log_path = "logs/error.log"
 # Path for application log, relative to the startup directory or an absolute path
 broker_log_path = "logs/broker.log"
 
+# 业务日志级别， 可选值： debug, info, warn, error
+# Log level for the broker, options: debug, info, warn, error
+broker_log_level = "info"
+
 [jwt]
 # 多个broker节点，必须保持一致;
 # In a multi-broker environment, the configuration must be consistent

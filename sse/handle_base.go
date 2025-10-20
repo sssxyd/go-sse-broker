@@ -5,22 +5,27 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
-func startRequest(c *gin.Context) {
-	c.Set("_start", time.Now().UnixMicro())
+func startRequest(c *fiber.Ctx) {
+	c.Locals("_start", time.Now().UnixMicro())
 }
 
-func endRequest(c *gin.Context) int64 {
-	start, _ := c.Get("_start")
+func endRequest(c *fiber.Ctx) int64 {
+	start := c.Locals("_start")
+	if start == nil {
+		return 0
+	}
 	return time.Now().UnixMicro() - start.(int64)
 }
 
-func fillParams[T any](c *gin.Context, params *T) error {
-	if c.Request.Method == "GET" {
-		if err := c.BindQuery(params); err != nil {
-			c.JSON(http.StatusOK, gin.H{
+func fillParams[T any](c *fiber.Ctx, params *T) error {
+	method := c.Method()
+	switch method {
+	case fiber.MethodGet:
+		if err := c.QueryParser(params); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{
 				"code":   http.StatusBadRequest,
 				"msg":    fmt.Sprintf("Failed to bind query: %s", err.Error()),
 				"result": "",
@@ -28,11 +33,12 @@ func fillParams[T any](c *gin.Context, params *T) error {
 			})
 			return err
 		}
-	} else if c.Request.Method == "POST" {
-		contentType := c.GetHeader("Content-Type")
-		if contentType == "application/json" {
-			if err := c.ShouldBindJSON(params); err != nil {
-				c.JSON(http.StatusOK, gin.H{
+	case fiber.MethodPost:
+		contentType := c.Get("Content-Type")
+		switch contentType {
+		case "application/json":
+			if err := c.BodyParser(params); err != nil {
+				c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"code":   http.StatusBadRequest,
 					"msg":    fmt.Sprintf("Failed to bind json: %s", err.Error()),
 					"result": "",
@@ -40,9 +46,9 @@ func fillParams[T any](c *gin.Context, params *T) error {
 				})
 				return err
 			}
-		} else if contentType == "application/x-www-form-urlencoded" || contentType == "multipart/form-data" {
-			if err := c.ShouldBind(params); err != nil {
-				c.JSON(http.StatusOK, gin.H{
+		case "application/x-www-form-urlencoded", "multipart/form-data":
+			if err := c.BodyParser(params); err != nil {
+				c.Status(http.StatusBadRequest).JSON(fiber.Map{
 					"code":   http.StatusBadRequest,
 					"msg":    fmt.Sprintf("Failed to bind form: %s", err.Error()),
 					"result": "",
@@ -50,9 +56,8 @@ func fillParams[T any](c *gin.Context, params *T) error {
 				})
 				return err
 			}
-		} else {
-			// 返回 415 不支持的媒体类型
-			c.JSON(http.StatusOK, gin.H{
+		default:
+			c.Status(http.StatusUnsupportedMediaType).JSON(fiber.Map{
 				"code":   http.StatusUnsupportedMediaType,
 				"msg":    fmt.Sprintf("Unsupported media type: %s", contentType),
 				"result": "",
@@ -60,16 +65,14 @@ func fillParams[T any](c *gin.Context, params *T) error {
 			})
 			return fmt.Errorf("unsupported media type")
 		}
-	} else {
-		// 返回 405 不支持的请求方法
-		c.JSON(http.StatusMethodNotAllowed, gin.H{
+	default:
+		c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{
 			"code":   http.StatusMethodNotAllowed,
-			"msg":    fmt.Sprintf("Method not allowed: %s", c.Request.Method),
+			"msg":    fmt.Sprintf("Method not allowed: %s", method),
 			"result": "",
 			"micro":  endRequest(c),
 		})
 		return fmt.Errorf("method not allowed")
 	}
-
 	return nil
 }

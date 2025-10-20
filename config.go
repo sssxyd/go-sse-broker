@@ -2,23 +2,38 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"path/filepath"
-	"sse-broker/funcs"
 
-	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
 )
 
 type Config struct {
 	Server struct {
-		Port          int    `toml:"port"`
-		AccessLogPath string `toml:"access_log_path"`
-		ErrorLogPath  string `toml:"error_log_path"`
-		BrokerLogPath string `toml:"broker_log_path"`
+		Port int `toml:"port"`
 	} `toml:"server"`
+	AccessLog struct {
+		Path         string `toml:"path"`
+		MaxMegaBytes int    `toml:"max_mega_bytes"`
+		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxBackups   int    `toml:"max_backups"`
+		Compress     bool   `toml:"compress"`
+	}
+	ErrorLog struct {
+		Path         string `toml:"path"`
+		MaxMegaBytes int    `toml:"max_mega_bytes"`
+		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxBackups   int    `toml:"max_backups"`
+		Compress     bool   `toml:"compress"`
+	}
+	BrokerLog struct {
+		Level        string `toml:"level"`
+		Path         string `toml:"path"`
+		MaxMegaBytes int    `toml:"max_mega_bytes"`
+		MaxAgeDay    int    `toml:"max_age_day"`
+		MaxBackups   int    `toml:"max_backups"`
+		Compress     bool   `toml:"compress"`
+	}
 	JWT struct {
 		Secret string `toml:"secret"`
 		Expire int    `toml:"expire"`
@@ -61,35 +76,4 @@ func loadConfig(baseDir string, configPath string) (*Config, error) {
 		config.SSE.HeartbeatInterval = 30
 	}
 	return &config, nil
-}
-
-func initLogger(baseDir string, config *Config) (accessLogFile, errorLogFile, appLogFile *os.File) {
-	// access log path
-	if !filepath.IsAbs(config.Server.AccessLogPath) {
-		config.Server.AccessLogPath = filepath.Join(baseDir, config.Server.AccessLogPath)
-	}
-	funcs.TouchDir(filepath.Dir(config.Server.AccessLogPath))
-	accessLogFile, err := os.OpenFile(config.Server.AccessLogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	gin.DefaultWriter = io.MultiWriter(accessLogFile, os.Stdout)
-
-	// error log path
-	if !filepath.IsAbs(config.Server.ErrorLogPath) {
-		config.Server.ErrorLogPath = filepath.Join(baseDir, config.Server.ErrorLogPath)
-	}
-	funcs.TouchDir(filepath.Dir(config.Server.ErrorLogPath))
-	errorLogFile, err = os.OpenFile(config.Server.ErrorLogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	gin.DefaultErrorWriter = io.MultiWriter(errorLogFile, os.Stderr)
-
-	// app log path
-	if !filepath.IsAbs(config.Server.BrokerLogPath) {
-		config.Server.BrokerLogPath = filepath.Join(baseDir, config.Server.BrokerLogPath)
-	}
-	appLogFile = funcs.InitializeLogFile(config.Server.BrokerLogPath, true)
-	return accessLogFile, errorLogFile, appLogFile
 }

@@ -2,7 +2,7 @@ package funcs
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net"
 	"time"
 
@@ -831,7 +831,7 @@ func (r *RedisClient) Publish(channel string, message interface{}) error {
 // 返回值：
 //   - error：错误信息，如果操作成功则为 nil。
 func (r *RedisClient) Subscribe(ctx context.Context, handler func(channel string, payload string), channels ...string) error {
-	log.Printf("Subscribe Redis Channels: %v", channels)
+	slog.Info("Subscribe Redis Channels", "channels", channels)
 	pubsub := r.client.Subscribe(ctx, channels...)
 
 	// 等待订阅确认
@@ -845,15 +845,15 @@ func (r *RedisClient) Subscribe(ctx context.Context, handler func(channel string
 		case <-ctx.Done():
 			// 取消订阅并关闭 pubsub
 			pubsub.Close()
-			log.Printf("Subscribe canceled: %v", channels)
+			slog.Info("Subscribe canceled", "channels", channels)
 			return nil
 		case msg, ok := <-pubsub.Channel():
 			// 检查订阅通道是否关闭
 			if !ok {
-				log.Printf("Subscribe closed: %v", channels)
+				slog.Info("Subscribe closed", "channels", channels)
 				return nil
 			}
-			log.Printf("Message: %v\n", msg)
+			slog.Info("Message received", "channel", msg.Channel, "payload", msg.Payload)
 			handler(msg.Channel, msg.Payload)
 		}
 	}

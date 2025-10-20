@@ -1,11 +1,10 @@
 package sse
 
 import (
-	"net/http"
 	"sse-broker/funcs"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -25,28 +24,26 @@ func jwtInit(secret string, expire int) {
 }
 
 // Middleware 处理JWT鉴权
-func TokenCheck() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenString := c.DefaultQuery("token", "")
+func TokenCheck() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tokenString := c.Query("token", "")
 		if tokenString == "" {
-			tokenString = c.GetHeader("X-SSE-Token")
+			tokenString = c.Get("X-SSE-Token")
 		}
-		deviceName := c.DefaultQuery("device", "")
+		deviceName := c.Query("device", "")
 		if deviceName == "" {
-			deviceName = c.GetHeader("X-SSE-Device")
+			deviceName = c.Get("X-SSE-Device")
 		}
-		lastEventID := c.DefaultQuery("id", "")
+		lastEventID := c.Query("id", "")
 		if lastEventID == "" {
-			lastEventID = c.GetHeader("X-SSE-ID")
+			lastEventID = c.Get("X-SSE-ID")
 		}
 		lastId, err := strconv.Atoi(lastEventID)
 		if err != nil {
 			lastId = 0
 		}
 		if tokenString == "" || deviceName == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token and device is required"})
-			c.Abort()
-			return
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "token and device is required"})
 		}
 
 		claims := &Claims{}
@@ -55,28 +52,22 @@ func TokenCheck() gin.HandlerFunc {
 		})
 
 		if deviceName != "" && claims.DeviceName != "" && claims.DeviceName != deviceName {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"code":   401,
 				"msg":    "Invalid device",
 				"result": "",
 			})
-			c.Abort()
-			return
 		}
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
-		// 将userId保存到上下文中
-		c.Set("_uid", claims.UID)
-		// 对deviceId进行MD5，防止乱写
-		c.Set("_device_name", deviceName)
-		c.Set("_device_id", funcs.MD5(deviceName))
-		// 将lastEventID保存到上下文中
-		c.Set("_last_event_id", lastId)
-		c.Next()
+		// Fiber上下文存储
+		c.Locals("_uid", claims.UID)
+		c.Locals("_device_name", deviceName)
+		c.Locals("_device_id", funcs.MD5(deviceName))
+		c.Locals("_last_event_id", lastId)
+		return c.Next()
 	}
 }

@@ -1,12 +1,12 @@
 package sse
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"sse-broker/funcs"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type InfoParams struct {
@@ -121,7 +121,7 @@ func getInstanceInfo(address string) InstanceInfo {
 func getClusterInfo() ClusterInfo {
 	instanceAddresses, err := globalRedis.SMembers(KEY_CLUSTER_INSTANCE_SET)
 	if err != nil {
-		log.Println("Failed to get instance addresses:", err)
+		slog.Error("Failed to get instance addresses", "error", err)
 	}
 	if len(instanceAddresses) == 0 {
 		return ClusterInfo{
@@ -143,7 +143,7 @@ func getClusterInfo() ClusterInfo {
 	userCount := 0
 	cnt, err := globalRedis.SCard(KEY_ONLINE_USER_SET)
 	if err != nil {
-		log.Println("Failed to get online user count:", err)
+		slog.Error("Failed to get online user count", "error", err)
 		userCount = 0
 	} else {
 		userCount = int(cnt)
@@ -156,13 +156,13 @@ func getClusterInfo() ClusterInfo {
 	}
 }
 
-func HandleInfo(c *gin.Context) {
+func HandleInfo(c *fiber.Ctx) error {
 	startRequest(c)
 	var params InfoParams
 	err := fillParams(c, &params)
 	if err != nil {
-		log.Fatalln(err)
-		return
+		slog.Error("Failed to fill params", "error", err)
+		return nil
 	}
 	var info interface{}
 	switch target, id := params.getTarget(); target {
@@ -175,9 +175,9 @@ func HandleInfo(c *gin.Context) {
 	case "cluster":
 		info = getClusterInfo()
 	default:
-		info = gin.H{}
+		info = fiber.Map{}
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"code":   1,
 		"msg":    "success",
 		"result": info,

@@ -3,13 +3,13 @@ package sse
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sse-broker/funcs"
 	"strings"
 	"sync"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -48,15 +48,15 @@ func collectDeviceIds(uid_str string, device_name_str string) []string {
 		}
 		_, err := pipe.Exec(ctx)
 		if err != nil && err != redis.Nil {
-			log.Println("Pipeline error:", err)
+			slog.Error("Pipeline error", "error", err)
 		} else {
 			for i, cmd := range cmds {
 				members, err := cmd.Result()
 				if err == redis.Nil {
-					log.Printf("User %s has no device\n", uids[i])
+					slog.Info("User has no device", "user", uids[i])
 					continue
 				} else if err != nil {
-					log.Printf("Error retrieving members from set %s: %v\n", userDeviceSetKeys[i], err)
+					slog.Error("Error retrieving members from set", "set", userDeviceSetKeys[i], "error", err)
 					continue
 				}
 				for _, deviceId := range members {
@@ -87,17 +87,17 @@ func getAllDeviceIds() []string {
 	}
 	_, err = pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
-		log.Println("Pipeline error:", err)
+		slog.Error("Pipeline error", "error", err)
 		return []string{}
 	}
 	var deviceIds []string
 	for i, cmd := range cmds {
 		members, err := cmd.Result()
 		if err == redis.Nil {
-			log.Printf("Instance %s has no device\n", instance_addresses[i])
+			slog.Info("Instance has no device", "instance", instance_addresses[i])
 			continue
 		} else if err != nil {
-			log.Printf("Error retrieving members from set: %v\n", err)
+			slog.Error("Error retrieving members from set", "set", instance_addresses[i], "error", err)
 			continue
 		}
 		deviceIds = append(deviceIds, members...)
@@ -119,17 +119,17 @@ func splitDeviceWithInstanceAddressBatch(deviceIds []string, instanceDeviceMap *
 
 	_, err := pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
-		log.Println("Pipeline error:", err)
+		slog.Error("Pipeline error", "error", err)
 		return
 	}
 
 	for i, cmd := range cmds {
 		address, err := cmd.Result()
 		if err == redis.Nil {
-			log.Printf("Device %s not found\n", deviceIds[i])
+			slog.Info("Device not found", "device", deviceIds[i])
 			continue
 		} else if err != nil {
-			log.Printf("Error retrieving instance address for device %s: %v\n", deviceIds[i], err)
+			slog.Error("Error retrieving instance address for device", "device", deviceIds[i], "error", err)
 			continue
 		}
 
@@ -175,21 +175,20 @@ func splitDeviceWithInstanceAddress(deviceIds []string) map[string][]string {
 	return resultMap
 }
 
-func HandleSend(c *gin.Context) {
+func HandleSend(c *fiber.Ctx) error {
 	startRequest(c)
 	var params SendFrameParams
 	if err := fillParams(c, &params); err != nil {
-		log.Fatalln(err)
-		return
+		slog.Error("Failed to fill params", "error", err)
+		return nil
 	}
 	if params.Data == "" {
-		c.JSON(http.StatusOK, gin.H{
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"code":   http.StatusBadRequest,
 			"msg":    "data cannot be empty",
 			"result": "",
 			"micro":  endRequest(c),
 		})
-		return
 	}
 	sendAll := params.UID == "" && params.Device == ""
 	var deviceIds []string
@@ -235,7 +234,7 @@ func HandleSend(c *gin.Context) {
 			}()
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"code":   1,
 		"msg":    "success",
 		"result": total,

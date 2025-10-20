@@ -3,7 +3,7 @@ package sse
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -26,7 +26,7 @@ func (u *User) touch() {
 func (u *User) getDeviceIds() []string {
 	deviceIds, err := globalRedis.SMembers(fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID))
 	if err != nil {
-		log.Printf("Failed to get user device set: %v\n", err)
+		slog.Error("Failed to get user device set", "error", err)
 		return []string{}
 	}
 	return u.validateDeviceSet(deviceIds)
@@ -54,7 +54,7 @@ func (u *User) validateDeviceSet(deviceIds []string) []string {
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
-		log.Println("Pipeline error:", err)
+		slog.Error("Pipeline error", "error", err)
 		return []string{}
 	}
 	var validDeviceIds []string
@@ -62,10 +62,10 @@ func (u *User) validateDeviceSet(deviceIds []string) []string {
 	for i, cmd := range cmds {
 		exists, err := cmd.Result()
 		if err == redis.Nil {
-			log.Printf("Device %s not exists\n", deviceIds[i])
+			slog.Warn("Device not exists", "device", deviceIds[i])
 			continue
 		} else if err != nil {
-			log.Printf("Error checking device existence: %v\n", err)
+			slog.Error("Error checking device existence", "error", err)
 			continue
 		}
 		if exists == 1 {
@@ -92,12 +92,12 @@ func (u *User) handleDeviceOnline(device *Device) {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to handle user device online: %v\n", err)
+		slog.Error("Failed to handle user device online", "error", err)
 		return
 	}
 	deviceIds, err := _cmds[0].(*redis.StringSliceCmd).Result()
 	if err != nil {
-		log.Printf("Failed to get user device set: %v\n", err)
+		slog.Error("Failed to get user device set", "error", err)
 		return
 	}
 	deviceIds = u.validateDeviceSet(deviceIds)
@@ -137,12 +137,12 @@ func (u *User) handleDeviceOffline(device *Device) {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to handle user device offline: %v\n", err)
+		slog.Error("Failed to handle user device offline", "error", err)
 		return
 	}
 	deviceIds, err := _cmds[1].(*redis.StringSliceCmd).Result()
 	if err != nil {
-		log.Printf("Failed to get user device set: %v\n", err)
+		slog.Error("Failed to get user device set", "error", err)
 		return
 	}
 	deviceIds = u.validateDeviceSet(deviceIds)
@@ -160,7 +160,7 @@ func (u *User) offline(deviceName string, reason string, payload string) {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Failed to offline user: %v\n", err)
+		slog.Error("Failed to offline user", "error", err)
 	}
 	DispatchUserOffline(StateChange{
 		Event:       UserOffline,

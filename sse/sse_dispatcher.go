@@ -3,7 +3,7 @@ package sse
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -21,7 +21,7 @@ func dispatchInstructionBatch(channel string, instructions []Instruction) {
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		log.Printf("Failed to dispatch instruction batch: %v\n", err)
+		slog.Error("Failed to dispatch instruction batch", "error", err)
 	}
 }
 
@@ -92,7 +92,7 @@ func post_json_with_retry(url string, payload string, retry int) {
 			}
 			break
 		}
-		log.Printf("Failed to dispatch http event: %v\n", err)
+		slog.Error("Failed to dispatch http event", "error", err)
 		time.Sleep(time.Duration(delaySeconds) * time.Second)
 		delaySeconds *= 6
 	}

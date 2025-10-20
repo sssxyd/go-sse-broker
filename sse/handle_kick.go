@@ -1,10 +1,10 @@
 package sse
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type KickParams struct {
@@ -13,22 +13,21 @@ type KickParams struct {
 	Data   string `json:"data" form:"data"`
 }
 
-func HandleKick(c *gin.Context) {
+func HandleKick(c *fiber.Ctx) error {
 	startRequest(c)
 	var params KickParams
 	err := fillParams(c, &params)
 	if err != nil {
-		log.Fatalln(err)
-		return
+		slog.Error(err.Error())
+		return nil
 	}
 	if params.UID == "" && params.Device == "" {
-		c.JSON(http.StatusOK, gin.H{
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"code":   http.StatusBadRequest,
 			"msg":    "uid and device cannot be empty at the same time",
 			"result": "",
 			"micro":  endRequest(c),
 		})
-		return
 	}
 	count := 0
 	deviceIds := collectDeviceIds(params.UID, params.Device)
@@ -56,7 +55,7 @@ func HandleKick(c *gin.Context) {
 			}
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"code":   1,
 		"msg":    "success",
 		"result": count,
