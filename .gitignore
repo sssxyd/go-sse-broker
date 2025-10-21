@@ -27,3 +27,4 @@ go.work.sum
 /linux
 /logs
 /.vscode
+/win64/logs

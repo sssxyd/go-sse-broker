@@ -82,19 +82,17 @@ func get_config_path(baseDir string, configPath string) (string, error) {
 	if is_windows() {
 		configPath = filepath.Join(baseDir, "config.toml")
 		if !funcs.PathExists(configPath) {
-			configPath = filepath.Join(baseDir, "config.windows.toml")
-		}
-		if !funcs.PathExists(configPath) {
 			return "", fmt.Errorf("config file not found")
 		} else {
 			return configPath, nil
 		}
-	}
-	configPath = "/etc/sse-broker/config.toml"
-	if !funcs.PathExists(configPath) {
+	} else {
 		configPath = filepath.Join(baseDir, "config.toml")
 		if !funcs.PathExists(configPath) {
-			return "", fmt.Errorf("config file not found")
+			configPath = "/etc/sse-broker/config.toml"
+			if !funcs.PathExists(configPath) {
+				return "", fmt.Errorf("config file not found")
+			}
 		}
 	}
 	return configPath, nil
@@ -173,7 +171,7 @@ func is_common_probe_path(path string) bool {
 }
 
 func init() {
-	// 设置Windows控制台为UTF-8编码
+	//设置Windows控制台为UTF-8编码
 	// if os.Getenv("OS") == "Windows_NT" {
 	// 	handle := windows.Handle(os.Stdout.Fd())
 	// 	var mode uint32
