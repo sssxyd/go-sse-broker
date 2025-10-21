@@ -1,0 +1,5 @@
+sse-broker (1.0.7-1) stable; urgency=medium
+
+  * Change Gin to Fiber.
+
+ -- xuyd <sssxyd@gmail.com>  Tue, 21 Oct 2025 15:33:34 +0800

@@ -1,9 +1,9 @@
 Source: sse-broker
 Section: net
 Priority: optional
-Maintainer: Xuyd <sssxyd@gmail.com>
-Build-Depends: debhelper (>= 9)
-Standards-Version: 4.5.0
+Maintainer: xuyd <sssxyd@gmail.com>
+Build-Depends: debhelper-compat (= 11)
+Standards-Version: 1.0.7
 Homepage: https://github.com/sssxyd/go-sse-broker
 
 Package: sse-broker
