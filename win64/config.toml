@@ -85,7 +85,7 @@ compress = true
 
 # 生成token的密钥
 # Secret key for generating JWT tokens
-secret = "iech7Ahquighu4ouma"
+secret = "Your_JWT_Secret"
 
 # token默认过期时间，单位秒
 # Default token expiration time, in seconds
@@ -97,11 +97,11 @@ expire = 3600
 
 # redis地址, 单地址为单例模式， 多地址为集群模式；单例模式下，db必须设置; 
 # Redis addresses, a single address for standalone mode, multiple addresses for cluster mode; in standalone mode, 'db' must be set; 
-addrs = ["192.168.2.252:6379"]
+addrs = ["Your_Redis_IP:6379"]
 
 # redis密码; 
 # Redis password; 
-password = "yaofangwang2018"
+password = "Your_Redis_Password"
 
 # redis数据库;
 # Redis database (used in standalone mode); 

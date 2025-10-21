@@ -28,3 +28,6 @@ go.work.sum
 /logs
 /.vscode
 /win64/logs
+/rpmbuild/RPMS
+rpmbuild/SOURCES/sse-broker-1.0.7.tar.gz
+win64/sse-broker-1.0.7.windows.x86_64.zip
