@@ -34,36 +34,14 @@ func fillParams[T any](c *fiber.Ctx, params *T) error {
 			return err
 		}
 	case fiber.MethodPost:
-		contentType := c.Get("Content-Type")
-		switch contentType {
-		case "application/json":
-			if err := c.BodyParser(params); err != nil {
-				c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"code":   http.StatusBadRequest,
-					"msg":    fmt.Sprintf("Failed to bind json: %s", err.Error()),
-					"result": "",
-					"micro":  endRequest(c),
-				})
-				return err
-			}
-		case "application/x-www-form-urlencoded", "multipart/form-data":
-			if err := c.BodyParser(params); err != nil {
-				c.Status(http.StatusBadRequest).JSON(fiber.Map{
-					"code":   http.StatusBadRequest,
-					"msg":    fmt.Sprintf("Failed to bind form: %s", err.Error()),
-					"result": "",
-					"micro":  endRequest(c),
-				})
-				return err
-			}
-		default:
-			c.Status(http.StatusUnsupportedMediaType).JSON(fiber.Map{
-				"code":   http.StatusUnsupportedMediaType,
-				"msg":    fmt.Sprintf("Unsupported media type: %s", contentType),
+		if err := c.BodyParser(params); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"code":   http.StatusBadRequest,
+				"msg":    fmt.Sprintf("Failed to bind json: %s", err.Error()),
 				"result": "",
 				"micro":  endRequest(c),
 			})
-			return fmt.Errorf("unsupported media type")
+			return err
 		}
 	default:
 		c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{
