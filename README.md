@@ -23,7 +23,7 @@ go-sse-broker is a powerful and flexible SSE (Server-Sent Events) server designe
 
 ## Docker
 ```shell
-docker build -t sse-broker:1.0.3 .
+docker build -t sse-broker:1.0.7 .
 ```
 
 ## Edit config.toml 
