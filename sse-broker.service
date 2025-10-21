@@ -1,0 +1,14 @@
+[Unit]
+Description=SSE Broker Service
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sse-broker
+Restart=on-failure
+WorkingDirectory=/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target
+

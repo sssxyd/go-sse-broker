@@ -1,0 +1,13 @@
+Source: sse-broker
+Section: net
+Priority: optional
+Maintainer: Xuyd <sssxyd@gmail.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 4.5.0
+Homepage: https://github.com/sssxyd/go-sse-broker
+
+Package: sse-broker
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd
+Description: SSE Broker Service
+ A powerful and flexible SSE (Server-Sent Events) server designed to offer a complete SSE service solution.

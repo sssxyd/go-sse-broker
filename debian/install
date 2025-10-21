@@ -1,0 +1,3 @@
+sse-broker usr/local/bin/
+sse-broker.service lib/systemd/system/
+config.toml etc/sse-broker/
