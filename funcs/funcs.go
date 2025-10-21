@@ -277,3 +277,8 @@ func MD5(text string) string {
 	md5String := hex.EncodeToString(hash[:])
 	return md5String
 }
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}

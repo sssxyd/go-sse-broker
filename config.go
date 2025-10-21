@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
 )
@@ -59,10 +58,7 @@ type Config struct {
 	} `toml:"callback"`
 }
 
-func loadConfig(baseDir string, configPath string) (*Config, error) {
-	if !filepath.IsAbs(configPath) {
-		configPath = filepath.Join(baseDir, configPath)
-	}
+func loadConfig(configPath string) (*Config, error) {
 	config := Config{}
 	file, err := os.Open(configPath)
 	if err != nil {

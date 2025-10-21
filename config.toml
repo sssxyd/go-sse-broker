@@ -15,7 +15,7 @@ port = 8080
 [access_log]
 # 请求access日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for access log, relative to the startup directory or an absolute path
-path = "logs/access.log"
+path = "/var/log/sse-broker/access.log"
 
 # 单个日志文件的最大大小，单位MB
 # Maximum size of a single log file, in MB
@@ -36,7 +36,7 @@ compress = true
 [error_log]
 # 请求error日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for error log, relative to the startup directory or an absolute path
-path = "logs/error.log"
+path = "/var/log/sse-broker/error.log"
 
 # 单个日志文件的最大大小，单位MB
 # Maximum size of a single log file, in MB
@@ -57,7 +57,7 @@ compress = true
 [broker_log]
 # 业务日志路径，相对目录，相对于启动目录；也可以是绝对路径
 # Path for application log, relative to the startup directory or an absolute path
-path = "logs/broker.log"
+path = "/var/log/sse-broker/broker.log"
 
 # 业务日志级别， 可选值： debug, info, warn, error
 # Log level for the broker, options: debug, info, warn, error

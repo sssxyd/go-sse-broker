@@ -13,13 +13,13 @@ const CMD_EXTRUDE_OFFLINE = "extrude_offline"
 const CMD_KICK_OFFLINE = "kick_offline"
 const CMD_INSTANCE_CLOSE = "instance_close"
 
-const DCR_EXTRUDE_OFFLINE = "extrude_offline"
-const DCR_KICK_OFFLINE = "kick_offline"
-const DCR_INSTANCE_CLOSE = "instance_close"
-const DCR_INSTANCE_CLEAR = "instance_clear"
-const DCR_HEARTBEAT_FAIL = "heartbeat_fail"
-const DCR_DEVICE_CONNECTED = "device_connected"
-const DCR_DEVICE_DISCONNECT = "device_disconnect"
+const DCR_EXTRUDE_OFFLINE = "extrude_offline"     // reason for extruding a device offline
+const DCR_KICK_OFFLINE = "kick_offline"           // reason for kicking a device offline
+const DCR_INSTANCE_CLOSE = "instance_close"       // reason for closing an instance
+const DCR_INSTANCE_CLEAR = "instance_clear"       // reason for clearing an instance
+const DCR_HEARTBEAT_FAIL = "heartbeat_fail"       // reason for heartbeat failure
+const DCR_DEVICE_CONNECTED = "device_connected"   // reason for device connection
+const DCR_DEVICE_DISCONNECT = "device_disconnect" // reason for device disconnection
 
 const EVT_SYS_CONNECTED = "sys_connected"
 const EVT_SYS_KICK_OFFLINE = "sys_kick_offline"

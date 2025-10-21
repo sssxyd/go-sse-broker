@@ -7,12 +7,15 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sse-broker/funcs"
 	"sse-broker/sse"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -31,6 +34,7 @@ var (
 	accessLogger io.Writer
 	errorLog     *lumberjack.Logger
 	errorLogger  io.Writer
+	brokerLogger *lumberjack.Logger
 )
 
 //go:embed static/**
@@ -40,6 +44,59 @@ const version = "1.0.7"
 
 func is_windows() bool {
 	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows")
+}
+
+func parse_addrs(ipv4, ipv6 string, port int) []string {
+	var addrs []string
+	if ipv4 != "" {
+		ips := strings.Split(ipv4, ",")
+		for _, ip := range ips {
+			trimmedIP := strings.TrimSpace(ip)
+			if trimmedIP != "" {
+				addrs = append(addrs, fmt.Sprintf("%s:%d", trimmedIP, port))
+			}
+		}
+	}
+	if ipv6 != "" {
+		ips := strings.Split(ipv6, ",")
+		for _, ip := range ips {
+			trimmedIP := strings.TrimSpace(ip)
+			if trimmedIP != "" {
+				addrs = append(addrs, fmt.Sprintf("[%s]:%d", trimmedIP, port))
+			}
+		}
+	}
+	return addrs
+}
+
+func get_config_path(baseDir string, configPath string) (string, error) {
+	if configPath != "" {
+		if !filepath.IsAbs(configPath) {
+			configPath = filepath.Join(baseDir, configPath)
+		}
+		if funcs.PathExists(configPath) {
+			return configPath, nil
+		}
+	}
+	if is_windows() {
+		configPath = filepath.Join(baseDir, "config.toml")
+		if !funcs.PathExists(configPath) {
+			configPath = filepath.Join(baseDir, "config.windows.toml")
+		}
+		if !funcs.PathExists(configPath) {
+			return "", fmt.Errorf("config file not found")
+		} else {
+			return configPath, nil
+		}
+	}
+	configPath = "/etc/sse-broker/config.toml"
+	if !funcs.PathExists(configPath) {
+		configPath = filepath.Join(baseDir, "config.toml")
+		if !funcs.PathExists(configPath) {
+			return "", fmt.Errorf("config file not found")
+		}
+	}
+	return configPath, nil
 }
 
 func create_logger(config *Config) {
@@ -60,7 +117,7 @@ func create_logger(config *Config) {
 
 	accessLog = funcs.InitializeLumberjackLogger(config.AccessLog.Path, config.AccessLog.MaxMegaBytes, config.AccessLog.MaxAgeDays, config.AccessLog.MaxBackups, config.AccessLog.Compress)
 	errorLog = funcs.InitializeLumberjackLogger(config.ErrorLog.Path, config.ErrorLog.MaxMegaBytes, config.ErrorLog.MaxAgeDays, config.ErrorLog.MaxBackups, config.ErrorLog.Compress)
-	brokerLogger := funcs.InitializeLumberjackLogger(config.BrokerLog.Path, config.BrokerLog.MaxMegaBytes, config.BrokerLog.MaxAgeDays, config.BrokerLog.MaxBackups, config.BrokerLog.Compress)
+	brokerLogger = funcs.InitializeLumberjackLogger(config.BrokerLog.Path, config.BrokerLog.MaxMegaBytes, config.BrokerLog.MaxAgeDays, config.BrokerLog.MaxBackups, config.BrokerLog.Compress)
 
 	var writer io.Writer
 	if is_windows() {
@@ -111,20 +168,18 @@ func init() {
 	if configPath == "" {
 		configPath = shortConfig
 	}
-	if configPath == "" {
-		if is_windows() {
-			configPath = "config.toml"
-		} else {
-			configPath = "/etc/sse-broker/config.toml"
-		}
+
+	configPath, err := get_config_path(funcs.GetAppRootPath(), configPath)
+	if err != nil {
+		fmt.Printf("Failed to get config path: %v\n", err)
+		panic(fmt.Sprintf("Failed to get config path: %v\n", err))
 	}
-	baseDir := funcs.GetAppRootPath()
-	cfg, err := loadConfig(baseDir, configPath)
+
+	config, err = loadConfig(configPath)
 	if err != nil {
 		fmt.Printf("Failed to load config: %v\n", err)
 		panic(fmt.Sprintf("Failed to load config: %v\n", err))
 	}
-	config = cfg
 
 	create_logger(config)
 
@@ -164,6 +219,12 @@ func init() {
 }
 
 func main() {
+	addrs := parse_addrs(config.Server.IPV4, config.Server.IPV6, config.Server.Port)
+	if len(addrs) == 0 {
+		slog.Error("No valid server addresses to listen on", "message", "please check the configuration")
+		return
+	}
+
 	// 创建 Fiber 应用，并定制错误处理（写入 error.log）
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -188,7 +249,7 @@ func main() {
 	// Panic 恢复并写栈到 error.log
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
-		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+		StackTraceHandler: func(c *fiber.Ctx, e any) {
 			if errorLogger != nil {
 				fmt.Fprintf(errorLogger, "%s | PANIC | %s %s | ip=%s | %v\n%s\n",
 					time.Now().Format("2006-01-02 15:04:05"),
@@ -241,12 +302,10 @@ func main() {
 	app.All("/info", sse.HandleInfo)
 	app.All("/kick", sse.HandleKick)
 
-	instanceIP := sse.GetIP()
 	instancePort := config.Server.Port
-	slog.Info("SSE-Broker Started", "port", instancePort)
-	slog.Info("Instance IP", "ip", instanceIP, "version", version)
-	slog.Info("API  Page", "url", fmt.Sprintf("http://%s:%d/", instanceIP, instancePort))
-	slog.Info("Demo Page", "url", fmt.Sprintf("http://%s:%d/static/demo.html", instanceIP, instancePort))
+	slog.Info("SSE Server Start On " + strings.Join(addrs, ","))
+	slog.Info("API  Page", "url", fmt.Sprintf("http://%s/", addrs[0]))
+	slog.Info("Demo Page", "url", fmt.Sprintf("http://%s/static/demo.html", addrs[0]))
 
 	// 优雅关闭：监听信号，触发 Fiber 关闭
 	quit := make(chan os.Signal, 1)
@@ -261,9 +320,30 @@ func main() {
 		}
 	}()
 
-	// 启动服务（阻塞直到关闭）
-	if err := app.Listen(fmt.Sprintf(":%d", instancePort)); err != nil {
-		slog.Error("Server stopped", "error", err.Error())
+	if len(addrs) == 1 {
+		// 启动服务（阻塞直到关闭）
+		if err := app.Listen(fmt.Sprintf(":%d", instancePort)); err != nil {
+			slog.Error("Server stopped", "error", err.Error())
+		}
+	} else {
+		// 多地址监听
+		var wg sync.WaitGroup
+		for _, addr := range addrs {
+			ln, err := net.Listen("tcp", addr)
+			if err != nil {
+				slog.Error("Failed to listen on address", "address", addr, "error", err.Error())
+				continue
+			}
+			wg.Add(1)
+			go func(l net.Listener, a string) {
+				defer wg.Done()
+				slog.Info("Listening on address", "address", a)
+				if err := app.Listener(l); err != nil {
+					slog.Error("Server stopped on address", "address", a, "error", err.Error())
+				}
+			}(ln, addr)
+		}
+		wg.Wait()
 	}
 
 	// 释放资源
@@ -273,5 +353,8 @@ func main() {
 	}
 	if errorLog != nil {
 		errorLog.Close()
+	}
+	if brokerLogger != nil {
+		brokerLogger.Close()
 	}
 }

@@ -232,6 +232,15 @@ password = "please_modify"
   |sse_topic_device_online| device connected |
   |sse_topic_device_offline| device disconnected |
 
+- Http Callback
+  ```toml
+  [callback]
+  user_online = "http://your_business_server:port/sse_callback/user_online"
+  user_offline = "http://your_business_server:port/sse_callback/user_offline"
+  device_online = "http://your_business_server:port/sse_callback/device_online"
+  device_offline = "http://your_business_server:port/sse_callback/device_offline"
+  ```
+
 - Message JSON Structure (Go)
   ```go
   type StateChange struct {
@@ -244,13 +253,17 @@ password = "please_modify"
   ```
 - Reasons (Go)
   ```go
-  const DCR_EXTRUDE_OFFLINE = "extrude_offline"
-  const DCR_KICK_OFFLINE = "kick_offline"
-  const DCR_INSTANCE_CLOSE = "instance_close"
-  const DCR_INSTANCE_CLEAR = "instance_clear"
-  const DCR_HEARTBEAT_FAIL = "heartbeat_fail"
-  const DCR_DEVICE_CONNECTED = "device_connected"
-  const DCR_DEVICE_DISCONNECT = "device_disconnect"
+  // Kicked offline by another device with the same device ID.
+  const DCR_EXTRUDE_OFFLINE = "extrude_offline"     
+  // Kicked offline by administrator
+  const DCR_KICK_OFFLINE = "kick_offline"          
+  // The server instance your device was connected to has shut down
+  const DCR_INSTANCE_CLOSE = "instance_close"       
+  // All connections on the server instance your device was connected to have been cleared
+  const DCR_INSTANCE_CLEAR = "instance_clear"       
+  const DCR_HEARTBEAT_FAIL = "heartbeat_fail"       
+  const DCR_DEVICE_CONNECTED = "device_connected"   
+  const DCR_DEVICE_DISCONNECT = "device_disconnect" 
   ```
 
 
