@@ -223,7 +223,7 @@ password = "please_modify"
 
 
 # Callback
-**Please Subscribe Redis Channel**  
+**Please Subscribe Redis Channel/Config http callback**  
 - Redis Channels
   | Redis Channel | Trigger |
   |---|---|
