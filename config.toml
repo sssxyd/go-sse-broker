@@ -133,7 +133,8 @@ device_frame_cache_expire = 604800
 # 默认向指定的redis频道发送消息，可以自定义回调地址，系统向该地址Post一个json数据
 # By default, messages are sent to the specified Redis channel. 
 # You can customize the callback address, and the system will post a JSON data to that address
-user_online = "http://127.0.0.1:8080/callback/user_online"
-user_offline = "http://127.0.0.1:8080/callback/user_offline"
-device_online = "http://127.0.0.1:8080/callback/device_online"
-device_offline = "http://127.0.1.1:8080/callback/device_offline"
+
+# user_online = "http://127.0.0.1:8080/callback/user_online"
+# user_offline = "http://127.0.0.1:8080/callback/user_offline"
+# device_online = "http://127.0.0.1:8080/callback/device_online"
+# device_offline = "http://127.0.1.1:8080/callback/device_offline"
