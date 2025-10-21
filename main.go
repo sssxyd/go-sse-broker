@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sse-broker/config"
 	"sse-broker/funcs"
 	"sse-broker/sse"
 	"strings"
@@ -29,7 +30,7 @@ import (
 )
 
 var (
-	config       *Config
+	configObj    *config.Config
 	accessLog    *lumberjack.Logger
 	accessLogger io.Writer
 	errorLog     *lumberjack.Logger
@@ -99,7 +100,7 @@ func get_config_path(baseDir string, configPath string) (string, error) {
 	return configPath, nil
 }
 
-func create_logger(config *Config) {
+func create_logger(config *config.Config) {
 	// 解析日志级别
 	var level slog.Level
 	switch config.BrokerLog.Level {
@@ -142,6 +143,35 @@ func create_logger(config *Config) {
 	slog.SetDefault(slog.New(handler))
 }
 
+// 判断是否为通用探测/调试/健康检查等路径
+func is_common_probe_path(path string) bool {
+	if strings.HasPrefix(path, "/.well-known/") {
+		return true
+	}
+	if path == "/robots.txt" || path == "/sitemap.xml" {
+		return true
+	}
+	if path == "/health" || path == "/healthz" || path == "/status" || path == "/ping" {
+		return true
+	}
+	if strings.HasPrefix(path, "/__webpack_hmr") || strings.HasPrefix(path, "/__vite_") || strings.HasPrefix(path, "/__browser_sync__") {
+		return true
+	}
+	if path == "/.env" || path == "/.git" || path == "/.gitignore" || path == "/.DS_Store" {
+		return true
+	}
+	if strings.HasPrefix(path, "/browser-sync/") {
+		return true
+	}
+	if strings.HasPrefix(path, "/debug") {
+		return true
+	}
+	if strings.HasPrefix(path, "/api-docs") || strings.HasPrefix(path, "/swagger") || strings.HasPrefix(path, "/openapi.json") {
+		return true
+	}
+	return false
+}
+
 func init() {
 	// 设置Windows控制台为UTF-8编码
 	// if os.Getenv("OS") == "Windows_NT" {
@@ -175,51 +205,51 @@ func init() {
 		panic(fmt.Sprintf("Failed to get config path: %v\n", err))
 	}
 
-	config, err = loadConfig(configPath)
+	configObj, err = config.LoadConfig(configPath)
 	if err != nil {
 		fmt.Printf("Failed to load config: %v\n", err)
 		panic(fmt.Sprintf("Failed to load config: %v\n", err))
 	}
 
-	create_logger(config)
+	create_logger(configObj)
 
 	sse.Start(sse.Config{
 		Server: struct {
 			Version string
 			Port    int
-		}{Version: version, Port: config.Server.Port},
+		}{Version: version, Port: configObj.Server.Port},
 		JWT: struct {
 			Secret string
 			Expire int
-		}{Secret: config.JWT.Secret, Expire: config.JWT.Expire},
+		}{Secret: configObj.JWT.Secret, Expire: configObj.JWT.Expire},
 		Redis: struct {
 			Addrs    []string
 			Password string
 			DB       int
 			PoolSize int
-		}{Addrs: config.Redis.Addrs, Password: config.Redis.Password, DB: config.Redis.DB, PoolSize: config.Redis.PoolSize},
+		}{Addrs: configObj.Redis.Addrs, Password: configObj.Redis.Password, DB: configObj.Redis.DB, PoolSize: configObj.Redis.PoolSize},
 		SSE: struct {
 			HeartbeatDuration         time.Duration
 			DeviceUserExistDuration   time.Duration
 			DeviceFrameExpireDuration time.Duration
 			DeviceFrameCacheSize      int
 		}{
-			HeartbeatDuration:         time.Duration(config.SSE.HeartbeatInterval) * time.Second,
-			DeviceUserExistDuration:   time.Duration(config.SSE.HeartbeatInterval+5) * time.Second,
-			DeviceFrameExpireDuration: time.Duration(config.SSE.DeviceFrameExpire) * time.Second,
-			DeviceFrameCacheSize:      config.SSE.DeviceFrameCacheSize,
+			HeartbeatDuration:         time.Duration(configObj.SSE.HeartbeatInterval) * time.Second,
+			DeviceUserExistDuration:   time.Duration(configObj.SSE.HeartbeatInterval+5) * time.Second,
+			DeviceFrameExpireDuration: time.Duration(configObj.SSE.DeviceFrameExpire) * time.Second,
+			DeviceFrameCacheSize:      configObj.SSE.DeviceFrameCacheSize,
 		},
 		Callback: map[string]string{
-			sse.TOPIC_USER_ONLINE:    config.Callback.UserOnline,
-			sse.TOPIC_USER_OFFLINE:   config.Callback.UserOffline,
-			sse.TOPIC_DEVICE_ONLINE:  config.Callback.DeviceOnline,
-			sse.TOPIC_DEVICE_OFFLINE: config.Callback.DeviceOffline,
+			sse.TOPIC_USER_ONLINE:    configObj.Callback.UserOnline,
+			sse.TOPIC_USER_OFFLINE:   configObj.Callback.UserOffline,
+			sse.TOPIC_DEVICE_ONLINE:  configObj.Callback.DeviceOnline,
+			sse.TOPIC_DEVICE_OFFLINE: configObj.Callback.DeviceOffline,
 		},
 	})
 }
 
 func main() {
-	addrs := parse_addrs(config.Server.IPV4, config.Server.IPV6, config.Server.Port)
+	addrs := parse_addrs(configObj.Server.IPV4, configObj.Server.IPV6, configObj.Server.Port)
 	if len(addrs) == 0 {
 		slog.Error("No valid server addresses to listen on", "message", "please check the configuration")
 		return
@@ -280,6 +310,14 @@ func main() {
 		Index:  "index.html",
 	}))
 
+	app.Use(func(c *fiber.Ctx) error {
+		// 如果是 devtools 探测路径，直接返回 204
+		if is_common_probe_path(c.Path()) {
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+		return c.Next()
+	})
+
 	// 根路径重定向
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/static/index.html", http.StatusMovedPermanently)
@@ -302,7 +340,7 @@ func main() {
 	app.All("/info", sse.HandleInfo)
 	app.All("/kick", sse.HandleKick)
 
-	instancePort := config.Server.Port
+	instancePort := configObj.Server.Port
 	slog.Info("SSE Server Start On " + strings.Join(addrs, ","))
 	slog.Info("API  Page", "url", fmt.Sprintf("http://%s/", addrs[0]))
 	slog.Info("Demo Page", "url", fmt.Sprintf("http://%s/static/demo.html", addrs[0]))

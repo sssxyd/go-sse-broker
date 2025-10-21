@@ -12,7 +12,7 @@ var (
 	globalInstance  *ServiceInstance
 	globalRedis     *funcs.RedisClient
 	deviceChannels  = &sync.Map{}
-	deviceChannelWG sync.WaitGroup // 用于等待所有goroutines完成的WaitGroup
+	deviceChannelWG = &sync.WaitGroup{} // 用于等待所有goroutines完成的WaitGroup
 )
 
 func Start(config Config) {

@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -58,7 +58,7 @@ type Config struct {
 	} `toml:"callback"`
 }
 
-func loadConfig(configPath string) (*Config, error) {
+func LoadConfig(configPath string) (*Config, error) {
 	config := Config{}
 	file, err := os.Open(configPath)
 	if err != nil {
@@ -69,6 +69,7 @@ func loadConfig(configPath string) (*Config, error) {
 	decoder := toml.NewDecoder(file)
 	if err := decoder.Decode(&config); err != nil {
 		fmt.Printf("Failed to decode config file: %v", err)
+		return nil, err
 	}
 	if config.SSE.HeartbeatInterval <= 0 {
 		config.SSE.HeartbeatInterval = 30

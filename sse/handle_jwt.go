@@ -42,14 +42,17 @@ func TokenCheck() fiber.Handler {
 		if err != nil {
 			lastId = 0
 		}
+
 		if tokenString == "" || deviceName == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "token and device is required"})
 		}
 
 		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
-		})
+		token, err := jwt.ParseWithClaims(tokenString, claims,
+			func(token *jwt.Token) (interface{}, error) {
+				return jwtSecret, nil
+			},
+		)
 
 		if deviceName != "" && claims.DeviceName != "" && claims.DeviceName != deviceName {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -58,7 +61,6 @@ func TokenCheck() fiber.Handler {
 				"result": "",
 			})
 		}
-
 		if err != nil || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}

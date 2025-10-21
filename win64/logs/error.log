@@ -1,0 +1,17 @@
+2025-10-21 11:09:42 | ERROR 404 | POST /callback/device_online | ip=127.0.0.1 | Cannot POST /callback/device_online
+2025-10-21 11:09:42 | ERROR 404 | POST /callback/user_online | ip=127.0.0.1 | Cannot POST /callback/user_online
+2025-10-21 11:10:04 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:10:09 | ERROR 404 | POST /callback/device_online | ip=127.0.0.1 | Cannot POST /callback/device_online
+2025-10-21 11:10:09 | ERROR 404 | POST /callback/device_offline | ip=127.0.0.1 | Cannot POST /callback/device_offline
+2025-10-21 11:10:09 | ERROR 404 | POST /callback/user_offline | ip=127.0.0.1 | Cannot POST /callback/user_offline
+2025-10-21 11:10:22 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:10:29 | ERROR 404 | POST /callback/device_online | ip=127.0.0.1 | Cannot POST /callback/device_online
+2025-10-21 11:10:29 | ERROR 404 | POST /callback/user_online | ip=127.0.0.1 | Cannot POST /callback/user_online
+2025-10-21 11:12:00 | ERROR 404 | POST /callback/device_offline | ip=127.0.0.1 | Cannot POST /callback/device_offline
+2025-10-21 11:12:00 | ERROR 404 | POST /callback/device_offline | ip=127.0.0.1 | Cannot POST /callback/device_offline
+2025-10-21 11:12:38 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:15:06 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:30:40 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:51:41 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 11:53:23 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
+2025-10-21 13:13:04 | ERROR 404 | GET /.well-known/appspecific/com.chrome.devtools.json | ip=127.0.0.1 | Cannot GET /.well-known/appspecific/com.chrome.devtools.json
