@@ -26,7 +26,7 @@ func HandleKick(c *fiber.Ctx) error {
 			"code":   http.StatusBadRequest,
 			"msg":    "uid and device cannot be empty at the same time",
 			"result": "",
-			"micro":  endRequest(c),
+			"micros": endRequest(c),
 		})
 	}
 	count := 0
@@ -56,9 +56,9 @@ func HandleKick(c *fiber.Ctx) error {
 		}
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"code":   1,
+		"code":   0,
 		"msg":    "success",
 		"result": count,
-		"micro":  endRequest(c),
+		"micros": endRequest(c),
 	})
 }

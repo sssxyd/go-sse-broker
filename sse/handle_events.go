@@ -3,8 +3,10 @@ package sse
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
+	"sse-broker/cfg"
 	"strings"
 	"time"
 
@@ -34,6 +36,15 @@ func getRealIP(c *fiber.Ctx) string {
 }
 
 func HandleEvents(c *fiber.Ctx) error {
+	// 配置 TCP KeepAlive，更快检测连接断开（兜底保障）
+	if conn := c.Context().Conn(); conn != nil {
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			// 启用 TCP KeepAlive（30秒探测间隔，作为应用层检测的兜底）
+			_ = tcpConn.SetKeepAlive(true)
+			_ = tcpConn.SetKeepAlivePeriod(30 * time.Second)
+		}
+	}
+
 	// 设置SSE响应头
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
@@ -87,9 +98,61 @@ func HandleEvents(c *fiber.Ctx) error {
 
 	// 暂存上下文，避免在 goroutine 中引用 c 导致并发问题
 	ctx := c.Context()
+
+	// 启动后台 goroutine 检测客户端断开 (FIN/RST/网络中断)
+	disconnectChan := make(chan string) // 传递断开原因
+	if conn := ctx.Conn(); conn != nil {
+		go func() {
+			defer close(disconnectChan)
+
+			// 持续尝试读取，检测连接断开
+			buf := make([]byte, 1)
+			for {
+				// SetReadDeadline 防止永久阻塞（30秒超时重试）
+				conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+				_, err := conn.Read(buf)
+
+				if err != nil {
+					// 判断断开类型
+					var reason string
+					errStr := err.Error()
+
+					if err == io.EOF {
+						reason = "FIN (graceful close)"
+					} else if strings.Contains(errStr, "reset") || strings.Contains(errStr, "RST") {
+						reason = "RST (connection reset)"
+					} else if strings.Contains(errStr, "timeout") || strings.Contains(errStr, "deadline") {
+						// 超时是正常的（因为我们设置了 30 秒 ReadDeadline）
+						// 继续循环，重新设置 deadline
+						continue
+					} else if strings.Contains(errStr, "broken pipe") {
+						reason = "network error (broken pipe)"
+					} else if strings.Contains(errStr, "use of closed") {
+						reason = "connection closed"
+					} else {
+						reason = fmt.Sprintf("unknown (%v)", err)
+					}
+
+					slog.Debug("Client connection terminated",
+						"device", deviceId,
+						"reason", reason,
+						"error", err)
+
+					disconnectChan <- reason
+					return
+				}
+
+				// 如果客户端意外发送了数据（SSE 不应该有上行数据），记录并继续检测
+				slog.Warn("Unexpected data from SSE client, ignoring",
+					"device", deviceId,
+					"bytes_read", len(buf))
+			}
+		}()
+	}
+
 	// 使用SetBodyStreamWriter保持连接不断开, 流式写入
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		ticker := time.NewTicker(globalConfig.SSE.HeartbeatDuration)
+		ticker := time.NewTicker(cfg.GlobalConfig().GetHeartbeatIntervalDuration())
 		defer ticker.Stop()
 
 		// 发送连接成功事件
@@ -148,19 +211,30 @@ func HandleEvents(c *fiber.Ctx) error {
 				default:
 					slog.Error("Unknown instruction", "instruction", instraction)
 				}
-			case <-ticker.C: // 心跳检测
+			case <-ticker.C: // 心跳检测（同时作为连接检测）
 				_, err := fmt.Fprintf(w, "%s\n\n", PAYLOAD_HEARTBEAT)
 				if err != nil {
-					device.offline(DCR_HEARTBEAT_FAIL, "")
+					device.offline(DCR_HEARTBEAT_FAIL, "heartbeat write failed")
 					user.handleDeviceOffline(device)
 					deviceChannelWG.Done()
-					slog.Error("write heartbeat failed", "error", err)
+					slog.Warn("Heartbeat write failed, client disconnected",
+						"device", deviceId,
+						"error", err)
 					return
 				} else {
 					_ = w.Flush()
 					device.touch()
 					user.touch()
 				}
+			case reason := <-disconnectChan: // 检测到客户端断开 (FIN/RST/网络异常)
+				slog.Info("Client connection terminated",
+					"device", deviceId,
+					"client", address,
+					"reason", reason)
+				device.offline(DCR_DEVICE_DISCONNECT, reason)
+				user.handleDeviceOffline(device)
+				deviceChannelWG.Done()
+				return
 			case <-ctx.Done(): // 客户端断开连接
 				slog.Info("Client disconnected", "client", address, "device", deviceName)
 				device.offline(DCR_DEVICE_DISCONNECT, "")

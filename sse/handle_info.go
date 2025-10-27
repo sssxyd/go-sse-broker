@@ -178,9 +178,9 @@ func HandleInfo(c *fiber.Ctx) error {
 		info = fiber.Map{}
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"code":   1,
+		"code":   0,
 		"msg":    "success",
 		"result": info,
-		"micro":  endRequest(c),
+		"micros": endRequest(c),
 	})
 }

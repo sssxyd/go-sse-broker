@@ -56,12 +56,12 @@ password = "please_modify"
     "device": "my computer 1"
   }
   ```  
-- Response Example (code 1:success, others:failure)
+- Response Example (code 0:success, others:failure)
   ```json
   {
-    "code": 1,            
+    "code": 0,            
     "msg": "success",
-    "micro": 192,
+    "micros": 192,
     "result": "jwt token string"
   }
   ```
@@ -87,12 +87,12 @@ password = "please_modify"
     "data": "hello"
    }
    ```
-- Response Example  (code 1:success, others:failure)
+- Response Example  (code 0:success, others:failure)
   ```json
   {
-    "code": 1,         
+    "code": 0,         
     "msg": "success",
-    "micro": 225,
+    "micros": 225,
     "result": 2       
   }
   ```
@@ -157,12 +157,12 @@ password = "please_modify"
     "uid": "sssxyd"
    }
    ```
-- Response Example  (code 1:success, others:failure)
+- Response Example  (code 0:success, others:failure)
   ```json
   {
-    "code": 1,         
+    "code": 0,         
     "msg": "success",
-    "micro": 225,
+    "micros": 225,
     "result": {
         "online": true,
         "uid": "sssxyd",
@@ -203,12 +203,12 @@ password = "please_modify"
     "uid": "1937",
    }
    ```
-- Response Example  (code 1:success, others:failure)
+- Response Example  (code 0:success, others:failure)
   ```json
   {
-    "code": 1,         
+    "code": 0,         
     "msg": "success",
-    "micro": 225,
+    "micros": 225,
     "result": 6       
   }
   ```

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sse-broker/cfg"
 	"strconv"
 	"time"
 
@@ -83,7 +84,7 @@ func NewDevice(deviceID, deviceName, uid, instanceAddress, deviceAddress string)
 			"last_touch_time", device.LastTouchTime,
 			"last_frame_id", device.LastFrameId,
 		)
-		pipe.Expire(ctx, deviceKey, globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, deviceKey, cfg.GlobalConfig().GetDeviceUserExistDuration())
 		return nil
 	})
 	if err != nil {
@@ -112,7 +113,7 @@ func (d *Device) touch() {
 	deviceKey := fmt.Sprintf("%s%s", KEY_DEVICE_PREFIX, d.DeviceID)
 	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.HSet(ctx, deviceKey, "last_touch_time", d.LastTouchTime)
-		pipe.Expire(ctx, deviceKey, globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, deviceKey, cfg.GlobalConfig().GetDeviceUserExistDuration())
 		return nil
 	})
 	if err != nil {
@@ -162,7 +163,7 @@ func (d *Device) delFrameCache() {
 
 func (d *Device) getCachedFrames(lastEventID int64) []Frame {
 	var frames []Frame
-	if globalConfig.SSE.DeviceFrameCacheSize <= 0 {
+	if cfg.GlobalConfig().SSE.DeviceFrameCacheSize <= 0 {
 		return frames
 	}
 	results, err := globalRedis.ZRangeByScore(fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, d.DeviceID), fmt.Sprintf("%f", float64(lastEventID+1)), "+inf")
@@ -193,14 +194,14 @@ func (d *Device) addFrame(event string, data string) Frame {
 		Event: event,
 		Data:  data,
 	}
-	if globalConfig.SSE.DeviceFrameCacheSize > 0 {
+	if cfg.GlobalConfig().SSE.DeviceFrameCacheSize > 0 {
 		ctx := context.Background()
-		stop := -int64(globalConfig.SSE.DeviceFrameCacheSize + 1)
+		stop := -int64(cfg.GlobalConfig().SSE.DeviceFrameCacheSize + 1)
 		cacheKey := fmt.Sprintf("%s%s", KEY_FRAME_CACHE_PREFIX, d.DeviceID)
 		_, err = globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(frame.ID), Member: frame.String()})
 			pipe.ZRemRangeByRank(ctx, cacheKey, 0, stop)
-			pipe.Expire(ctx, cacheKey, globalConfig.SSE.DeviceFrameExpireDuration)
+			pipe.Expire(ctx, cacheKey, cfg.GlobalConfig().GetDeviceFrameExpireDuration())
 			return nil
 		})
 		if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sse-broker/cfg"
 	"strings"
 	"time"
 )
@@ -72,9 +73,9 @@ func DispatchUserOffline(change StateChange) {
 }
 
 func on_state_change(sse_topic string, payload string) {
-	url, exist := globalConfig.Callback[sse_topic]
-	if !exist || url == "" || url == "null" {
-		return
+	url := cfg.GlobalConfig().GetCallbackURL(sse_topic)
+	if url == "" {
+		return // 未配置回调URL，直接返回
 	}
 	url = strings.TrimSpace(url)
 	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {

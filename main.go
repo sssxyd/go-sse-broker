@@ -12,7 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sse-broker/config"
+	"sse-broker/cfg"
 	"sse-broker/funcs"
 	"sse-broker/sse"
 	"strings"
@@ -30,7 +30,6 @@ import (
 )
 
 var (
-	configObj    *config.Config
 	accessLog    *lumberjack.Logger
 	accessLogger io.Writer
 	errorLog     *lumberjack.Logger
@@ -41,7 +40,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.7"
+const version = "1.0.8"
 
 func is_windows() bool {
 	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows")
@@ -98,7 +97,8 @@ func get_config_path(baseDir string, configPath string) (string, error) {
 	return configPath, nil
 }
 
-func create_logger(config *config.Config) {
+func create_logger() {
+	config := cfg.GlobalConfig()
 	// 解析日志级别
 	var level slog.Level
 	switch config.BrokerLog.Level {
@@ -203,51 +203,20 @@ func init() {
 		panic(fmt.Sprintf("Failed to get config path: %v\n", err))
 	}
 
-	configObj, err = config.LoadConfig(configPath)
+	_, err = cfg.LoadConfig(configPath)
 	if err != nil {
 		fmt.Printf("Failed to load config: %v\n", err)
 		panic(fmt.Sprintf("Failed to load config: %v\n", err))
 	}
+	cfg.GlobalConfig().Server.Version = version
 
-	create_logger(configObj)
+	create_logger()
 
-	sse.Start(sse.Config{
-		Server: struct {
-			Version string
-			Port    int
-		}{Version: version, Port: configObj.Server.Port},
-		JWT: struct {
-			Secret string
-			Expire int
-		}{Secret: configObj.JWT.Secret, Expire: configObj.JWT.Expire},
-		Redis: struct {
-			Addrs    []string
-			Password string
-			DB       int
-			PoolSize int
-		}{Addrs: configObj.Redis.Addrs, Password: configObj.Redis.Password, DB: configObj.Redis.DB, PoolSize: configObj.Redis.PoolSize},
-		SSE: struct {
-			HeartbeatDuration         time.Duration
-			DeviceUserExistDuration   time.Duration
-			DeviceFrameExpireDuration time.Duration
-			DeviceFrameCacheSize      int
-		}{
-			HeartbeatDuration:         time.Duration(configObj.SSE.HeartbeatInterval) * time.Second,
-			DeviceUserExistDuration:   time.Duration(configObj.SSE.HeartbeatInterval+5) * time.Second,
-			DeviceFrameExpireDuration: time.Duration(configObj.SSE.DeviceFrameExpire) * time.Second,
-			DeviceFrameCacheSize:      configObj.SSE.DeviceFrameCacheSize,
-		},
-		Callback: map[string]string{
-			sse.TOPIC_USER_ONLINE:    configObj.Callback.UserOnline,
-			sse.TOPIC_USER_OFFLINE:   configObj.Callback.UserOffline,
-			sse.TOPIC_DEVICE_ONLINE:  configObj.Callback.DeviceOnline,
-			sse.TOPIC_DEVICE_OFFLINE: configObj.Callback.DeviceOffline,
-		},
-	})
+	sse.Start()
 }
 
 func main() {
-	addrs := parse_addrs(configObj.Server.IPV4, configObj.Server.IPV6, configObj.Server.Port)
+	addrs := parse_addrs(cfg.GlobalConfig().Server.IPV4, cfg.GlobalConfig().Server.IPV6, cfg.GlobalConfig().Server.Port)
 	if len(addrs) == 0 {
 		slog.Error("No valid server addresses to listen on", "message", "please check the configuration")
 		return
@@ -269,7 +238,7 @@ func main() {
 				"code":   code,
 				"msg":    err.Error(),
 				"result": "",
-				"micro":  0,
+				"micros": 0,
 			})
 		},
 	})
@@ -338,7 +307,7 @@ func main() {
 	app.All("/info", sse.HandleInfo)
 	app.All("/kick", sse.HandleKick)
 
-	instancePort := configObj.Server.Port
+	instancePort := cfg.GlobalConfig().Server.Port
 	slog.Info("SSE Server Start On " + strings.Join(addrs, ","))
 	slog.Info("API  Page", "url", fmt.Sprintf("http://%s/", addrs[0]))
 	slog.Info("Demo Page", "url", fmt.Sprintf("http://%s/static/demo.html", addrs[0]))

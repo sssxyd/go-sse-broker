@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sse-broker/cfg"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -20,7 +21,7 @@ func NewUser(uid string) *User {
 }
 
 func (u *User) touch() {
-	globalRedis.Expire(fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID), globalConfig.SSE.DeviceUserExistDuration)
+	globalRedis.Expire(fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID), cfg.GlobalConfig().GetDeviceUserExistDuration())
 }
 
 func (u *User) getDeviceIds() []string {
@@ -88,7 +89,7 @@ func (u *User) handleDeviceOnline(device *Device) {
 	_cmds, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.SMembers(ctx, userDeviceSetKey)
 		pipe.SAdd(ctx, userDeviceSetKey, device.DeviceID)
-		pipe.Expire(ctx, userDeviceSetKey, globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, userDeviceSetKey, cfg.GlobalConfig().GetDeviceUserExistDuration())
 		return nil
 	})
 	if err != nil {
@@ -112,7 +113,7 @@ func (u *User) online(deviceId string, deviceName string, reason string, payload
 	userDeviceSetKey := fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID)
 	globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.SAdd(ctx, userDeviceSetKey, deviceId)
-		pipe.Expire(ctx, userDeviceSetKey, globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, userDeviceSetKey, cfg.GlobalConfig().GetDeviceUserExistDuration())
 		pipe.SAdd(ctx, KEY_ONLINE_USER_SET, u.UID)
 		return nil
 	})
@@ -133,7 +134,7 @@ func (u *User) handleDeviceOffline(device *Device) {
 	_cmds, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.SRem(ctx, userDeviceSetKey, device.DeviceID)
 		pipe.SMembers(ctx, userDeviceSetKey)
-		pipe.Expire(ctx, userDeviceSetKey, globalConfig.SSE.DeviceUserExistDuration)
+		pipe.Expire(ctx, userDeviceSetKey, cfg.GlobalConfig().GetDeviceUserExistDuration())
 		return nil
 	})
 	if err != nil {

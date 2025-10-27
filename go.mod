@@ -3,6 +3,7 @@ module sse-broker
 go 1.25.1
 
 require (
+	github.com/creasty/defaults v1.8.0
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/pelletier/go-toml/v2 v2.2.2

@@ -44,14 +44,14 @@ func HandleToken(c *fiber.Ctx) error {
 			"code":   http.StatusInternalServerError,
 			"msg":    fmt.Sprintf("Failed to sign token: %s", err.Error()),
 			"result": "",
-			"micro":  endRequest(c),
+			"micros": endRequest(c),
 		})
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"code":   1,
+		"code":   0,
 		"msg":    "success",
 		"result": tokenString,
-		"micro":  endRequest(c),
+		"micros": endRequest(c),
 	})
 }

@@ -187,7 +187,7 @@ func HandleSend(c *fiber.Ctx) error {
 			"code":   http.StatusBadRequest,
 			"msg":    "data cannot be empty",
 			"result": "",
-			"micro":  endRequest(c),
+			"micros": endRequest(c),
 		})
 	}
 	sendAll := params.UID == "" && params.Device == ""
@@ -235,9 +235,9 @@ func HandleSend(c *fiber.Ctx) error {
 		}
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"code":   1,
+		"code":   0,
 		"msg":    "success",
 		"result": total,
-		"micro":  endRequest(c),
+		"micros": endRequest(c),
 	})
 }

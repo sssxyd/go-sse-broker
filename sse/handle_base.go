@@ -29,7 +29,7 @@ func fillParams[T any](c *fiber.Ctx, params *T) error {
 				"code":   http.StatusBadRequest,
 				"msg":    fmt.Sprintf("Failed to bind query: %s", err.Error()),
 				"result": "",
-				"micro":  endRequest(c),
+				"micros": endRequest(c),
 			})
 			return err
 		}
@@ -39,7 +39,7 @@ func fillParams[T any](c *fiber.Ctx, params *T) error {
 				"code":   http.StatusBadRequest,
 				"msg":    fmt.Sprintf("Failed to bind json: %s", err.Error()),
 				"result": "",
-				"micro":  endRequest(c),
+				"micros": endRequest(c),
 			})
 			return err
 		}
@@ -48,7 +48,7 @@ func fillParams[T any](c *fiber.Ctx, params *T) error {
 			"code":   http.StatusMethodNotAllowed,
 			"msg":    fmt.Sprintf("Method not allowed: %s", method),
 			"result": "",
-			"micro":  endRequest(c),
+			"micros": endRequest(c),
 		})
 		return fmt.Errorf("method not allowed")
 	}
