@@ -79,9 +79,14 @@ func get_config_path(baseDir string, configPath string) (string, error) {
 		}
 	}
 	if is_windows() {
-		configPath = filepath.Join(baseDir, "config.toml")
+		configPath = filepath.Join(baseDir, "config.windows.toml")
 		if !funcs.PathExists(configPath) {
-			return "", fmt.Errorf("config file not found")
+			configPath = filepath.Join(baseDir, "config.toml")
+			if !funcs.PathExists(configPath) {
+				return "", fmt.Errorf("config file not found")
+			} else {
+				return configPath, nil
+			}
 		} else {
 			return configPath, nil
 		}

@@ -30,10 +30,10 @@ type Config struct {
 }
 
 type Instruction struct {
-	DeviceID string `json:"device_id"`
-	Command  string `json:"command"`
-	Event    string `json:"event"`
-	Data     string `json:"data"`
+	DeviceID string     `json:"device_id"`
+	Command  SSECommand `json:"command"`
+	Event    string     `json:"event"`
+	Data     string     `json:"data"`
 }
 
 func (i *Instruction) String() string {
@@ -68,12 +68,12 @@ const (
 )
 
 type StateChange struct {
-	Event       StateEvent `json:"event"`
-	UID         string     `json:"uid"`
-	Device      string     `json:"device"`
-	EventTimeMs int64      `json:"event_time_ms"`
-	Reason      string     `json:"reason"`
-	Payload     string     `json:"payload"`
+	Event       StateEvent        `json:"event"`
+	UID         string            `json:"uid"`
+	Device      string            `json:"device"`
+	EventTimeMs int64             `json:"event_time_ms"`
+	Reason      DeviceCloseReason `json:"reason"`
+	Payload     string            `json:"payload"`
 }
 
 func (s *StateChange) String() string {

@@ -134,7 +134,7 @@ func (d *Device) online() {
 	})
 }
 
-func (d *Device) offline(reason string, payload string) {
+func (d *Device) offline(reason DeviceCloseReason, payload string) {
 	// 关闭设备的指令通道
 	if channel, ok := deviceChannels.LoadAndDelete(d.DeviceID); ok {
 		inschan, ok := channel.(chan Instruction)

@@ -91,6 +91,161 @@ func (r *RedisClient) Set(key string, value interface{}, expiration time.Duratio
 	return r.client.Set(context.Background(), key, value, expiration).Err()
 }
 
+// SetNX 仅当指定键不存在时，设置其值。
+//
+// 参数：
+//   - key string：键。
+//   - value interface{}：值。
+//   - expiration time.Duration：过期时间。
+//
+// 返回值：
+//   - bool：是否成功设置。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) SetNX(key string, value interface{}, expiration time.Duration) (bool, error) {
+	return r.client.SetNX(context.Background(), key, value, expiration).Result()
+}
+
+// SetXX 仅当指定键已存在时，设置其值。
+//
+// 参数：
+//   - key string：键。
+//   - value interface{}：值。
+//   - expiration time.Duration：过期时间。
+//
+// 返回值：
+//   - bool：是否成功设置。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) SetXX(key string, value interface{}, expiration time.Duration) (bool, error) {
+	return r.client.SetXX(context.Background(), key, value, expiration).Result()
+}
+
+// Append 将值追加到指定键的值末尾。
+//
+// 参数：
+//   - key string：键。
+//   - value string：要追加的值。
+//
+// 返回值：
+//   - int64：追加后字符串的长度。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) Append(key string, value string) (int64, error) {
+	return r.client.Append(context.Background(), key, value).Result()
+}
+
+// GetRange 获取指定键的值的子字符串。
+//
+// 参数：
+//   - key string：键。
+//   - start int64：起始位置。
+//   - end int64：结束位置。
+//
+// 返回值：
+//   - string：子字符串。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) GetRange(key string, start int64, end int64) (string, error) {
+	return r.client.GetRange(context.Background(), key, start, end).Result()
+}
+
+// SetRange 从指定偏移量开始覆盖字符串的一部分。
+//
+// 参数：
+//   - key string：键。
+//   - offset int64：偏移量。
+//   - value string：新值。
+//
+// 返回值：
+//   - int64：修改后字符串的长度。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) SetRange(key string, offset int64, value string) (int64, error) {
+	return r.client.SetRange(context.Background(), key, offset, value).Result()
+}
+
+// StrLen 获取指定键的值的长度。
+//
+// 参数：
+//   - key string：键。
+//
+// 返回值：
+//   - int64：字符串长度。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) StrLen(key string) (int64, error) {
+	return r.client.StrLen(context.Background(), key).Result()
+}
+
+// GetSet 设置新值并返回旧值（已废弃，建议使用 SetArgs）。
+//
+// 参数：
+//   - key string：键。
+//   - value interface{}：新值。
+//
+// 返回值：
+//   - string：旧值。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) GetSet(key string, value interface{}) (string, error) {
+	return r.client.GetSet(context.Background(), key, value).Result()
+}
+
+// GetEx 获取指定键的值并设置过期时间。
+//
+// 参数：
+//   - key string：键。
+//   - expiration time.Duration：过期时间，0 表示移除过期时间。
+//
+// 返回值：
+//   - string：值。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) GetEx(key string, expiration time.Duration) (string, error) {
+	return r.client.GetEx(context.Background(), key, expiration).Result()
+}
+
+// GetDel 获取指定键的值并删除该键。
+//
+// 参数：
+//   - key string：键。
+//
+// 返回值：
+//   - string：值。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) GetDel(key string) (string, error) {
+	return r.client.GetDel(context.Background(), key).Result()
+}
+
+// IncrByFloat 将指定键的值增加指定浮点数。
+//
+// 参数：
+//   - key string：键。
+//   - value float64：增量。
+//
+// 返回值：
+//   - float64：增加后的值。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) IncrByFloat(key string, value float64) (float64, error) {
+	return r.client.IncrByFloat(context.Background(), key, value).Result()
+}
+
+// MSet 批量设置多个键值对。
+//
+// 参数：
+//   - values ...interface{}：键值对列表，依次为 key1, value1, key2, value2...
+//
+// 返回值：
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) MSet(values ...interface{}) error {
+	return r.client.MSet(context.Background(), values...).Err()
+}
+
+// MSetNX 仅当所有键都不存在时，批量设置多个键值对。
+//
+// 参数：
+//   - values ...interface{}：键值对列表，依次为 key1, value1, key2, value2...
+//
+// 返回值：
+//   - bool：是否成功设置。
+//   - error：错误信息，如果操作成功则为 nil。
+func (r *RedisClient) MSetNX(values ...interface{}) (bool, error) {
+	return r.client.MSetNX(context.Background(), values...).Result()
+}
+
 // Get 获取指定键的值。
 //
 // 参数：
@@ -118,12 +273,12 @@ func (r *RedisClient) MGet(keys ...string) ([]interface{}, error) {
 // Del 删除指定键。
 //
 // 参数：
-//   - key string：键。
+//   - keys ...string：键列表。
 //
 // 返回值：
 //   - error：错误信息，如果操作成功则为 nil。
-func (r *RedisClient) Del(key string) error {
-	return r.client.Del(context.Background(), key).Err()
+func (r *RedisClient) Del(keys ...string) error {
+	return r.client.Del(context.Background(), keys...).Err()
 }
 
 // Exists 检查指定键是否存在。
@@ -863,14 +1018,37 @@ func (r *RedisClient) GetClient() redis.UniversalClient {
 	return r.client
 }
 
+/**
+ * Pipeline 创建一个管道对象，用于批量执行命令。
+ * 返回值：
+ *   - redis.Pipeliner：管道对象。
+ */
 func (r *RedisClient) Pipeline() redis.Pipeliner {
 	return r.client.Pipeline()
 }
 
+/**
+ * TxPipelined 在事务中执行一组命令。
+ * 参数：
+ *   - ctx context.Context：上下文对象。
+ *   - f func(redis.Pipeliner) error：执行命令的函数。
+ * 返回值：
+ *   - []redis.Cmder：命令的结果列表。
+ *   - error：错误信息，如果操作成功则为 nil。
+ */
 func (r *RedisClient) TxPipelined(ctx context.Context, f func(redis.Pipeliner) error) ([]redis.Cmder, error) {
 	return r.client.TxPipelined(ctx, f)
 }
 
+/**
+ * Watch 监视一个或多个键，并在事务中执行一组命令。
+ * 参数：
+ *   - ctx context.Context：上下文对象
+ *   - f func(*redis.Tx) error：执行命令的函数。
+ *   - keys ...string：要监视的键列表。
+ * 返回值：
+ *   - error：错误信息，如果操作成功则为 nil。
+ */
 func (r *RedisClient) Watch(ctx context.Context, f func(*redis.Tx) error, keys ...string) error {
 	return r.client.Watch(ctx, f, keys...)
 }

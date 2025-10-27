@@ -108,7 +108,7 @@ func (u *User) handleDeviceOnline(device *Device) {
 	}
 }
 
-func (u *User) online(deviceId string, deviceName string, reason string, payload string) {
+func (u *User) online(deviceId string, deviceName string, reason DeviceCloseReason, payload string) {
 	ctx := context.Background()
 	userDeviceSetKey := fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID)
 	globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
@@ -153,7 +153,7 @@ func (u *User) handleDeviceOffline(device *Device) {
 	}
 }
 
-func (u *User) offline(deviceName string, reason string, payload string) {
+func (u *User) offline(deviceName string, reason DeviceCloseReason, payload string) {
 	ctx := context.Background()
 	_, err := globalRedis.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.Del(ctx, fmt.Sprintf("%s%s", KEY_USER_DEVICE_SET_PREFIX, u.UID))

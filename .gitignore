@@ -33,3 +33,5 @@ rpmbuild/SOURCES/sse-broker-1.0.7.tar.gz
 win64/sse-broker-1.0.7.windows.x86_64.zip
 /debian/*.deb
 /rpmbuild/SOURCES
+/win64/*.zip
+/win64/config.windows.toml
