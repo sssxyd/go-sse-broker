@@ -72,13 +72,13 @@ func (c *Config) GetCallbackURL(topic string) string {
 		return ""
 	}
 	switch topic {
-	case "user_online":
+	case "sse_topic_user_online":
 		return c.Callback.UserOnline
-	case "user_offline":
+	case "sse_topic_user_offline":
 		return c.Callback.UserOffline
-	case "device_online":
+	case "sse_topic_device_online":
 		return c.Callback.DeviceOnline
-	case "device_offline":
+	case "sse_topic_device_offline":
 		return c.Callback.DeviceOffline
 	}
 	return ""
