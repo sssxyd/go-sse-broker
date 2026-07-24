@@ -40,7 +40,7 @@ var (
 //go:embed static/**
 var staticFiles embed.FS
 
-const version = "1.0.8"
+const version = "1.0.9"
 
 func is_windows() bool {
 	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows")
