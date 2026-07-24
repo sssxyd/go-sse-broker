@@ -39,10 +39,7 @@ func DispatchInstructions(instanceAddress string, instructions []Instruction) {
 	} else {
 		batchSize := 250 // 每批次发送250条指令
 		for i := 0; i < len(instructions); i += batchSize {
-			end := i + batchSize
-			if end > len(instructions) {
-				end = len(instructions)
-			}
+			end := min(i+batchSize, len(instructions))
 			dispatchInstructionBatch(channel, instructions[i:end])
 		}
 	}
@@ -75,26 +72,45 @@ func DispatchUserOffline(change StateChange) {
 func on_state_change(sse_topic string, payload string) {
 	url := cfg.GlobalConfig().GetCallbackURL(sse_topic)
 	if url == "" {
+		slog.Debug("No callback URL configured for topic", "topic", sse_topic)
 		return // 未配置回调URL，直接返回
 	}
 	url = strings.TrimSpace(url)
-	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 		go post_json_with_retry(url, payload, 3)
 	}
 }
 
 func post_json_with_retry(url string, payload string, retry int) {
+	if retry <= 0 {
+		return
+	}
+
 	delaySeconds := 10
-	for range retry {
+	for attempt := 1; attempt <= retry; attempt++ {
 		resp, err := httpClient.Post(url, "application/json", strings.NewReader(payload))
-		if err == nil {
+		if err != nil {
 			if resp != nil {
 				resp.Body.Close()
 			}
-			break
+			slog.Error("Failed to dispatch http event", "url", url, "attempt", attempt, "max_retry", retry, "error", err)
+		} else if resp != nil {
+			if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
+				resp.Body.Close()
+				return
+			}
+
+			slog.Error("Callback returned non-2xx status", "url", url, "attempt", attempt, "max_retry", retry, "status_code", resp.StatusCode, "status", resp.Status)
+			resp.Body.Close()
+		} else {
+			slog.Error("Callback returned nil response", "url", url, "attempt", attempt, "max_retry", retry)
 		}
-		slog.Error("Failed to dispatch http event", "error", err)
-		time.Sleep(time.Duration(delaySeconds) * time.Second)
-		delaySeconds *= 6
+
+		if attempt < retry {
+			time.Sleep(time.Duration(delaySeconds) * time.Second)
+			delaySeconds *= 6
+		}
 	}
+
+	slog.Error("Dispatch http event failed after retries", "url", url, "max_retry", retry)
 }
