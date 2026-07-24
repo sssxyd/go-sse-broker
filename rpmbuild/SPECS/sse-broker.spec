@@ -1,5 +1,5 @@
 Name:		sse-broker
-Version:	1.0.7
+Version:	1.0.9
 Release:	1%{?dist}
 Summary:	SSE Broker Service
 
