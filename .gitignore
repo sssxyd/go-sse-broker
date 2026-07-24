@@ -35,3 +35,5 @@ win64/sse-broker-1.0.7.windows.x86_64.zip
 /rpmbuild/SOURCES
 /win64/*.zip
 /win64/config.windows.toml
+
+*.zip

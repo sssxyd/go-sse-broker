@@ -1,0 +1,1 @@
+Please configure Redis and JWT in the config.toml file.

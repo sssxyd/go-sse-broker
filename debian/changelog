@@ -1,17 +1,11 @@
+sse-broker (1.0.9) stable; urgency=medium
+
+  * Optimize Callback.
+
+ -- xuyd <sssxyd@gmail.com>  Tue, 24 Jul 2026 09:35:00 +0800
+
 sse-broker (1.0.7-1) stable; urgency=medium
 
   * Change Gin to Fiber.
 
  -- xuyd <sssxyd@gmail.com>  Tue, 21 Oct 2025 15:33:34 +0800
-
-sse-broker (1.0.8-1) stable; urgency=medium
-
-  * Add Callback.
-
--- xuyd <sssxyd@gmail.com>  Tue, 21 Nov 2025 15:33:34 +0800
-
-sse-broker (1.0.9-1) stable; urgency=medium
-
-  * Optimize Callback.
-
- -- xuyd <sssxyd@gmail.com>  Tue, 24 Jul 2026 09:35:00 +0800
