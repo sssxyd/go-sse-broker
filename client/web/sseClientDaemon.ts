@@ -63,9 +63,13 @@ type QueryMap = Record<string, QueryValue>
  * 外部调用者可以直接引用这些常量，避免在业务代码中手写字符串。
  */
 export enum SSESystemEventName {
+	// 服务端通知客户端实例已成功连接，客户端无需任何操作。
 	Connected = 'sys_connected',
+	// 服务端通知客户端实例被踢下线，客户端应当停止守护器并清理相关状态，业务上可能触发自动登出或提示用户。
 	KickOffline = 'sys_kick_offline',
+	// 服务端通知客户端实例被挤下线，客户端应当停止守护器并清理相关状态，业务上可能触发自动登出或提示用户。
 	ExtrudeOffline = 'sys_extrude_offline',
+	// 服务端通知客户端实例，当前连接的服务器即将关闭，一般客户端无需任何操作，自动重连(连到其他服务器实例)即可。
 	InstanceClose = 'sys_instance_close'
 }
 
