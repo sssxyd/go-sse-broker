@@ -14,16 +14,16 @@
  * getDevice / getToken 用于动态生成当前连接所需的认证信息。
  */
 export interface SSEClientDaemonOptions {
-	getDevice: () => string | Promise<string>
-	getToken: () => string | Promise<string>
-	url: string
-	initialRetryDelay?: number
-	maxRetryDelay?: number
-	retryFactor?: number
-	jitter?: number
-	autoStart?: boolean
-	onOpen?: (event: Event) => void
-	onError?: (event: Event | Error) => void
+	getDevice: () => string | Promise<string>   // 获取当前设备 ID 的函数，返回值可以是字符串或 Promise<string>
+	getToken: () => string | Promise<string>   // 获取当前访问令牌的函数，返回值可以是字符串或 Promise<string>
+	url: string     // SSE 服务端地址，必须是支持 EventSource 的 URL
+	initialRetryDelay?: number // 首次重连延迟（毫秒），默认 1000
+	maxRetryDelay?: number  // 重连延迟上限（毫秒），默认 30000
+	retryFactor?: number    // 指数退避倍率（第 N 次重连大致为 initialRetryDelay * retryFactor^N），默认 2
+	jitter?: number     // 抖动系数，避免大量客户端在同一时间点同时重连，默认 0.2
+	autoStart?: boolean // 创建实例后是否自动启动连接，默认 true
+	onOpen?: (event: Event) => void // 连接成功时的回调函数
+	onError?: (event: Event | Error) => void // 连接错误时的回调函数
 }
 
 /**
@@ -31,14 +31,23 @@ export interface SSEClientDaemonOptions {
  * 通过这些方法，可以控制连接生命周期，并注册不同类型的消息监听器。
  */
 export interface SSEClientDaemon {
+    // 启动守护器：将状态切换为活跃，并尝试建立连接。
 	start: () => void
+    // 停止守护器：关闭当前连接、清理重连任务，并重置内部状态。
 	stop: () => void
+    // 立即重连：在当前没有活跃连接时先激活守护器，再发起一次连接尝试。
 	reconnect: () => void
+    // 注册普通消息监听器，收到默认 onmessage 消息时触发。
 	addMessageListener: (listener: (data: string) => void) => void
+    // 移除普通消息监听器。
 	removeMessageListener: (listener: (data: string) => void) => void
+    // 注册指定事件名的监听器，收到对应事件时触发。
 	addEventListener: (eventName: string, listener: (data: string) => void) => void
+    // 移除指定事件名的监听器。
 	removeEventListener: (eventName: string, listener: (data: string) => void) => void
+    // 当前连接状态：CONNECTING / OPEN / CLOSED。
 	readonly readyState: number
+    // 当前守护器是否处于活跃状态。
 	readonly isActive: boolean
 }
 
