@@ -22,6 +22,7 @@ export interface SSEClientDaemonOptions {
 	retryFactor?: number    // 指数退避倍率（第 N 次重连大致为 initialRetryDelay * retryFactor^N），默认 2
 	jitter?: number     // 抖动系数，避免大量客户端在同一时间点同时重连，默认 0.2
 	autoStart?: boolean // 创建实例后是否自动启动连接，默认 true
+	lastEventIdStorageKey?: string // 存储 lastEventId 的 localStorage 键名，默认 sseClientDaemon:lastEventId
 	onOpen?: (event: Event) => void // 连接成功时的回调函数
 	onError?: (event: Event | Error) => void // 连接错误时的回调函数
 }
@@ -70,7 +71,7 @@ export enum SSESystemEventName {
 
 // 默认重连策略配置。
 // 这些值决定连接失败后多久再次尝试建立连接，以及重试频率的增长方式。
-const DEFAULTS: Required<Pick<SSEClientDaemonOptions, 'initialRetryDelay' | 'maxRetryDelay' | 'retryFactor' | 'jitter' | 'autoStart'>> = {
+const DEFAULTS: Required<Pick<SSEClientDaemonOptions, 'initialRetryDelay' | 'maxRetryDelay' | 'retryFactor' | 'jitter' | 'autoStart' | 'lastEventIdStorageKey'>> = {
 	// 首次重连延迟（毫秒）
 	initialRetryDelay: 1000,
 	// 重连延迟上限（毫秒）
@@ -80,7 +81,9 @@ const DEFAULTS: Required<Pick<SSEClientDaemonOptions, 'initialRetryDelay' | 'max
 	// 抖动系数，避免大量客户端在同一时间点同时重连
 	jitter: 0.2,
 	// 创建实例后是否自动启动连接
-	autoStart: true
+	autoStart: true,
+	// 存储 lastEventId 的 localStorage 键名
+	lastEventIdStorageKey: 'sseClientDaemon:lastEventId'
 }
 
 // 需要默认绑定的系统级事件名称。
@@ -116,6 +119,29 @@ function joinUrlWithQuery(url: string, query: QueryMap): string {
 	return `${url}${url.indexOf('?') === -1 ? '?' : '&'}${parts.join('&')}`
 }
 
+function readLastEventIdFromStorage(storageKey: string): string | null {
+	try {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return null
+		}
+		return window.localStorage.getItem(storageKey)
+	} catch (error) {
+		console.warn('[sseClientDaemon] read lastEventId from localStorage failed:', error)
+		return null
+	}
+}
+
+function writeLastEventIdToStorage(storageKey: string, value: string): void {
+	try {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return
+		}
+		window.localStorage.setItem(storageKey, value)
+	} catch (error) {
+		console.warn('[sseClientDaemon] write lastEventId to localStorage failed:', error)
+	}
+}
+
 export default function createSSEClientDaemon(options: Partial<SSEClientDaemonOptions> = {}): SSEClientDaemon {
 	const resolvedOptions = {
 		...DEFAULTS,
@@ -128,6 +154,7 @@ export default function createSSEClientDaemon(options: Partial<SSEClientDaemonOp
 		retryFactor,
 		jitter,
 		autoStart,
+		lastEventIdStorageKey,
 		onOpen,
 		onError
 	} = resolvedOptions
@@ -149,6 +176,8 @@ export default function createSSEClientDaemon(options: Partial<SSEClientDaemonOp
 	const requestUrl = url as string
 	const getDeviceFn = getDevice as () => string | Promise<string>
 	const getTokenFn = getToken as () => string | Promise<string>
+	const storageKey = lastEventIdStorageKey || DEFAULTS.lastEventIdStorageKey
+	let lastEventId = ''
 
 	// 当前正在使用的 EventSource 实例。
 	let eventSource: EventSource | null = null
@@ -174,15 +203,25 @@ export default function createSSEClientDaemon(options: Partial<SSEClientDaemonOp
 		retryTimer = null
 	}
 
+	function refreshLastEventId() {
+		lastEventId = readLastEventIdFromStorage(storageKey) || ''
+	}
+
 	// 每次建立连接前都重新读取 device 和 token，并拼接为最终的 SSE 地址。
 	// 这样可以避免使用已经失效的授权信息。
 	async function buildSseUrl(): Promise<string> {
+		refreshLastEventId()
 		const device = await Promise.resolve(getDeviceFn())
 		const token = await Promise.resolve(getTokenFn())
-		return joinUrlWithQuery(requestUrl, {
+		const query: QueryMap = {
 			device,
 			token
-		})
+		}
+		// 如果存储中有 lastEventId，则在请求时带上，便于服务端从上次断开的位置继续推送消息。
+		if (lastEventId) {
+			query.id = lastEventId
+		}
+		return joinUrlWithQuery(requestUrl, query)
 	}
 
 	// 关闭当前已存在的 EventSource 实例。
@@ -273,8 +312,28 @@ export default function createSSEClientDaemon(options: Partial<SSEClientDaemonOp
 		emitMessage(data)
 	}
 
+	function persistLastEventId(eventId: string) {
+		if (!eventId) {
+			return
+		}
+		lastEventId = eventId
+		writeLastEventIdToStorage(storageKey, eventId)
+	}
+
+	function getEventIdFromMessageEvent(messageEvent: MessageEvent): string {
+		const eventWithId = messageEvent as MessageEvent & { id?: string }
+		if (typeof eventWithId.id === 'string' && eventWithId.id) {
+			return eventWithId.id
+		}
+		return ''
+	}
+
 	// 统一入口：接收原生事件，解析数据并进行分发。
 	function handleIncomingEvent(messageEvent: MessageEvent) {
+		const eventId = getEventIdFromMessageEvent(messageEvent)
+		if (eventId) {
+			persistLastEventId(eventId)
+		}
 		const data = parseEventData(messageEvent)
 		const eventName = resolveEventName(messageEvent, data)
 		handleResolvedEvent(eventName, data)
